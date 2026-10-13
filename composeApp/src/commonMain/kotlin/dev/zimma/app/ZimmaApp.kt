@@ -21,6 +21,7 @@ fun ZimmaApp(store: ZimmaStore) {
         var splash by remember { mutableStateOf(true) }
         var about by remember { mutableStateOf(false) }
         Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
+            PlatformBackHandler(about) { about = false }
             if (about) AboutScreen { about = false } else MoneyScreen(store) { about = true }
             AnimatedVisibility(splash, exit = fadeOut()) { Splash { splash = false } }
         }
