@@ -18,6 +18,7 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -44,10 +45,9 @@ fun Splash(onDone: () -> Unit) {
     }
     Column(Modifier.fillMaxSize().background(Ink), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
         Canvas(Modifier.size(150.dp)) {
-            val r = size.width * 0.3f
-            val stroke = size.width * 0.12f
-            drawArc(Cream, -90f, 360f * moon.value, false, Offset(center.x - r, center.y - r), Size(r * 2, r * 2), style = Stroke(stroke))
-            zimamDot(center, size.width * 0.21f * pop.value, Orange)
+            val u = size.width / 512f
+            drawRoundRect(Cream.copy(alpha = moon.value), Offset(110f * u, 170f * u), Size(292f * u, 200f * u), CornerRadius(40f * u), style = Stroke(38f * u))
+            zimamDot(Offset(350f * u, 270f * u), 70f * u * pop.value, Orange)
         }
         Text("Zimma", Modifier.alpha(name.value), color = Cream, fontSize = 30.sp, fontWeight = FontWeight.SemiBold)
         Text("by Zimam", Modifier.alpha(name.value), color = Orange, fontSize = 14.sp, fontWeight = FontWeight.Medium, letterSpacing = 1.sp)
