@@ -1,4 +1,4 @@
 -keepattributes *Annotation*, InnerClasses
 -dontwarn org.slf4j.**
--keep,includedescriptorclasses class dev.zimma.core.**$$serializer { *; }
--keepclassmembers class dev.zimma.core.** { *** Companion; }
+-keep,includedescriptorclasses class dev.namaa.core.**$$serializer { *; }
+-keepclassmembers class dev.namaa.core.** { *** Companion; }

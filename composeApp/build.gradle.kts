@@ -41,14 +41,14 @@ kotlin {
 }
 
 android {
-    namespace = "dev.zimma.money"
+    namespace = "dev.namaa.money"
     compileSdk = 36
     defaultConfig {
         applicationId = "dev.zimma.money"
         minSdk = 26
         targetSdk = 35
-        versionCode = 5
-        versionName = "0.3.0"
+        versionCode = 6
+        versionName = "0.4.0"
     }
     signingConfigs {
         create("release") {
@@ -57,12 +57,12 @@ android {
             enableV2Signing = true
             enableV3Signing = true
             enableV4Signing = true
-            val store = System.getenv("ZIMMA_KEYSTORE")
+            val store = System.getenv("NAMAA_KEYSTORE")
             if (store != null) {
                 storeFile = file(store)
-                storePassword = System.getenv("ZIMMA_KEYSTORE_PASSWORD")
-                keyAlias = System.getenv("ZIMMA_KEY_ALIAS") ?: "zimma"
-                keyPassword = System.getenv("ZIMMA_KEYSTORE_PASSWORD")
+                storePassword = System.getenv("NAMAA_KEYSTORE_PASSWORD")
+                keyAlias = System.getenv("NAMAA_KEY_ALIAS") ?: "zimma"
+                keyPassword = System.getenv("NAMAA_KEYSTORE_PASSWORD")
             }
         }
     }
@@ -71,7 +71,7 @@ android {
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
-            if (System.getenv("ZIMMA_KEYSTORE") != null) signingConfig = signingConfigs.getByName("release")
+            if (System.getenv("NAMAA_KEYSTORE") != null) signingConfig = signingConfigs.getByName("release")
         }
     }
     splits {
@@ -91,10 +91,10 @@ android {
 
 compose.desktop {
     application {
-        mainClass = "dev.zimma.app.MainKt"
+        mainClass = "dev.namaa.app.MainKt"
         nativeDistributions {
             targetFormats(TargetFormat.Deb)
-            packageName = "zimma"
+            packageName = "namaa"
             packageVersion = "1.0.0"
             description = "Private money tracking in plain files"
             vendor = "Zimam"

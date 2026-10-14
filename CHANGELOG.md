@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.4.0
+
+- **Zimma is now Namaa** (نماء, growth). New name, new icon. The Android application id and the signing key are unchanged, so it installs as an update.
+- **One folder, new name.** Your data is copied into `Zimam/Namaa` from `Zimam/Zimma` and the private folder (checked file by file; nothing is overwritten, a clashing older file is kept beside as `name (from Zimma).ext`; the old folders stay as a backup, and Settings can remove one only after checking again).
+- The README no longer carries the brand boards; they live in `branding/boards`.
+
 ## 0.3.0
 
 - **Budgets** per category with a progress bar, a warning at 80 percent and an over-budget alert; the Home card shows the ones that need attention.
