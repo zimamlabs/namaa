@@ -1,5 +1,6 @@
 package dev.namaa.app
 
+import dev.namaa.core.Str
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -69,14 +70,14 @@ fun TxnRow(t: Txn, accounts: List<Account>, onClick: () -> Unit) {
     val colour = if (t.amountMinor < 0) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.secondary
     Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).clickable(onClick = onClick).padding(vertical = 6.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
         Box(Modifier.size(38.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primaryContainer), contentAlignment = Alignment.Center) {
-            Text((t.category.ifEmpty { "Other" }).take(1).uppercase(), color = MaterialTheme.colorScheme.onPrimaryContainer, fontWeight = FontWeight.SemiBold)
+            Text(categoryShown(t.category).take(1).uppercase(), color = MaterialTheme.colorScheme.onPrimaryContainer, fontWeight = FontWeight.SemiBold)
         }
         Column(Modifier.weight(1f)) {
-            Text(t.category.ifEmpty { "Other" }, style = MaterialTheme.typography.bodyLarge, maxLines = 1)
+            Text(categoryShown(t.category), style = MaterialTheme.typography.bodyLarge, maxLines = 1)
             val account = accounts.firstOrNull { it.id == t.accountId }?.name.orEmpty()
             Text(prettyDate(t.date) + (if (account.isNotEmpty() && accounts.size > 1) "  ·  $account" else "") + (if (t.note.isNotBlank()) "  ·  ${t.note}" else ""), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1)
         }
-        Text(formatMoney(t.amountMinor), style = MaterialTheme.typography.titleSmall, color = colour)
+        Text(money(t.amountMinor), style = MaterialTheme.typography.titleSmall, color = colour)
     }
 }
 
@@ -88,6 +89,7 @@ fun HomeScreen(
     onOpen: (Tab) -> Unit, onEdit: (Txn) -> Unit, onTour: () -> Unit,
 ) {
     val today = store.today
+    val language = lang()
     val month = monthSummary(store.txns, today.year, today.monthNumber)
     val total = store.accounts.sumOf { balance(it, store.txns) }
     val currency = store.accounts.map { it.currency }.distinct().singleOrNull() ?: ""
@@ -95,53 +97,53 @@ fun HomeScreen(
         item {
             Card(Modifier.fillMaxWidth(), shape = RoundedCornerShape(28.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer), border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant), elevation = CardDefaults.cardElevation(0.dp)) {
                 Column(Modifier.heroGlow().padding(22.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Text("${monthName(today.monthNumber)} ${today.year}  ·  ${prettyDate(today)}", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Text("Balance", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Text((formatMoney(total) + " " + currency).trim(), style = MaterialTheme.typography.displaySmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface)
+                    Text(num("${monthName(today.monthNumber)} ${today.year}") + "  ·  " + prettyDate(today), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(Str.Balance.t(), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text((money(total) + " " + currency).trim(), style = MaterialTheme.typography.displaySmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface)
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                        Stat("Income", formatMoney(month.incomeMinor), MaterialTheme.colorScheme.secondary)
-                        Stat("Spent", formatMoney(-month.expenseMinor), MaterialTheme.colorScheme.primary)
-                        Stat("Left", formatMoney(month.netMinor), MaterialTheme.colorScheme.onSurface)
+                        Stat(Str.Income.t(), money(month.incomeMinor), MaterialTheme.colorScheme.secondary)
+                        Stat(Str.Spent.t(), money(-month.expenseMinor), MaterialTheme.colorScheme.primary)
+                        Stat(Str.Left.t(), money(month.netMinor), MaterialTheme.colorScheme.onSurface)
                     }
                 }
             }
         }
         item {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                QuickAction(Icons.Rounded.Remove, "Expense", Modifier.weight(1f), onExpense)
-                QuickAction(Icons.Rounded.Add, "Income", Modifier.weight(1f), onIncome)
-                QuickAction(Icons.Rounded.SwapHoriz, "Transfer", Modifier.weight(1f), onTransfer)
+                QuickAction(Icons.Rounded.Remove, Str.QuickExpense.t(), Modifier.weight(1f), onExpense)
+                QuickAction(Icons.Rounded.Add, Str.Income.t(), Modifier.weight(1f), onIncome)
+                QuickAction(Icons.Rounded.SwapHoriz, Str.QuickTransfer.t(), Modifier.weight(1f), onTransfer)
             }
         }
         val budgetStatus = budgetStatuses(store.budgets, store.txns, today.year, today.monthNumber)
         if (budgetStatus.isNotEmpty()) item {
             Panel {
                 val warn = budgetStatus.count { it.state != BudgetState.Ok }
-                SectionTitle(Icons.Rounded.Savings, if (warn > 0) "Budgets: $warn need attention" else "Budgets") { TextButton(onClick = { onOpen(Tab.Plan) }) { Text("Plan") } }
+                SectionTitle(Icons.Rounded.Savings, if (warn > 0) Str.BudgetsAttention.t(warn) else Str.Budgets.t()) { TextButton(onClick = { onOpen(Tab.Plan) }) { Text(Str.TabPlan.t()) } }
                 budgetStatus.take(3).forEach { BudgetBar(it) }
             }
         }
         if (month.byCategory.isNotEmpty()) item {
             Panel {
-                SectionTitle(Icons.Rounded.PieChart, "Where it went this month")
-                DonutChart(month.byCategory.map { it.first to -it.second }, "Spent", formatMoney(-month.expenseMinor))
+                SectionTitle(Icons.Rounded.PieChart, Str.WhereItWent.t())
+                DonutChart(month.byCategory.map { it.first to -it.second }, Str.Spent.t(), money(-month.expenseMinor))
             }
         }
         item {
             Panel {
-                SectionTitle(Icons.Rounded.BarChart, "Last six months")
+                SectionTitle(Icons.Rounded.BarChart, Str.LastSix.t())
                 MonthBars(monthlyTotals(store.txns, today.year, today.monthNumber, 6))
             }
         }
         item {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                SectionTitle(Icons.Rounded.AccountBalanceWallet, "Accounts") { TextButton(onClick = { onOpen(Tab.Accounts) }) { Text("All") } }
+                SectionTitle(Icons.Rounded.AccountBalanceWallet, Str.TabAccounts.t()) { TextButton(onClick = { onOpen(Tab.Accounts) }) { Text(Str.All.t()) } }
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     items(store.accounts, key = { it.id }) { a ->
                         Card(Modifier.width(168.dp), shape = RoundedCornerShape(24.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer), border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant), elevation = CardDefaults.cardElevation(0.dp)) {
                             Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                                 Text(a.name, style = MaterialTheme.typography.labelLarge, maxLines = 1)
-                                Text(formatMoney(balance(a, store.txns)), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
+                                Text(money(balance(a, store.txns)), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
                                 Text(a.currency, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             }
                         }
@@ -151,17 +153,17 @@ fun HomeScreen(
         }
         item {
             Panel {
-                SectionTitle(Icons.Rounded.History, "Recent") { TextButton(onClick = { onOpen(Tab.Money) }) { Text("See all") } }
-                if (store.txns.isEmpty()) Text("Nothing yet. Add an expense or income above.", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                SectionTitle(Icons.Rounded.History, Str.Recent.t()) { TextButton(onClick = { onOpen(Tab.Money) }) { Text(Str.SeeAll.t()) } }
+                if (store.txns.isEmpty()) Text(Str.NothingYet.t(), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 store.txns.take(5).forEach { t -> TxnRow(t, store.accounts) { onEdit(t) } }
             }
         }
-        val notes = ReleaseNotes.forVersion(APP_VERSION)
+        val notes = ReleaseNotes.forVersion(APP_VERSION, language)
         if (notes.isNotEmpty()) item {
             Panel {
                 SectionTitle(Icons.Rounded.AutoAwesome, "What's new in Namaa $APP_VERSION")
                 notes.forEach { Text("•  $it", style = MaterialTheme.typography.bodyMedium) }
-                TextButton(onClick = onTour) { Text("Show the tour again") }
+                TextButton(onClick = onTour) { Text(Str.ShowTour.t()) }
             }
         }
     }

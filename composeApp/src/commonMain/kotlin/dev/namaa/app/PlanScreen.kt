@@ -1,5 +1,6 @@
 package dev.namaa.app
 
+import dev.namaa.core.Str
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -55,7 +56,7 @@ import dev.namaa.core.parseMoney
 import dev.namaa.core.withPayment
 import kotlinx.datetime.LocalDate
 
-enum class PlanSection(val label: String) { Budgets("Budgets"), Repeating("Repeating"), Owed("Who owes whom") }
+enum class PlanSection(val label: Str) { Budgets(Str.SecBudgets), Repeating(Str.SecRepeating), Owed(Str.SecOwed) }
 
 @Composable
 fun BudgetBar(status: BudgetStatus) {
@@ -64,14 +65,14 @@ fun BudgetBar(status: BudgetStatus) {
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 if (status.state != BudgetState.Ok) Icon(Icons.Rounded.Warning, null, tint = colour, modifier = Modifier.height(16.dp))
-                Text(status.budget.category, style = MaterialTheme.typography.bodyLarge)
+                Text(categoryShown(status.budget.category), style = MaterialTheme.typography.bodyLarge)
             }
-            Text(formatMoney(status.spentMinor) + " of " + formatMoney(status.budget.limitMinor), style = MaterialTheme.typography.labelLarge, color = colour)
+            Text(Str.AmountOf.t(money(status.spentMinor), money(status.budget.limitMinor)), style = MaterialTheme.typography.labelLarge, color = colour)
         }
         Box(Modifier.fillMaxWidth().height(8.dp).clip(RoundedCornerShape(4.dp)).background(MaterialTheme.colorScheme.surfaceContainerHigh)) {
             Box(Modifier.fillMaxWidth(status.fraction.coerceIn(0.02f, 1f)).height(8.dp).clip(RoundedCornerShape(4.dp)).background(colour))
         }
-        Text(if (status.state == BudgetState.Over) "Over by " + formatMoney(-status.remainingMinor) else formatMoney(status.remainingMinor) + " left", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(if (status.state == BudgetState.Over) Str.OverBy.t(money(-status.remainingMinor)) else Str.LeftAmount.t(money(status.remainingMinor)), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
 
@@ -94,25 +95,25 @@ fun PlanScreen(store: NamaaStore, padding: PaddingValues, section: PlanSection, 
     val today = store.today
     Column(Modifier.fillMaxSize().padding(padding)) {
         LazyRow(Modifier.padding(horizontal = 16.dp, vertical = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            items(PlanSection.entries) { s -> FilterChip(section == s, { onSection(s) }, { Text(s.label) }) }
+            items(PlanSection.entries) { s -> FilterChip(section == s, { onSection(s) }, { Text(s.label.t()) }) }
         }
         LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 4.dp, bottom = 96.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             when (section) {
                 PlanSection.Budgets -> {
                     val statuses = budgetStatuses(store.budgets, store.txns, today.year, today.monthNumber)
-                    if (statuses.isEmpty()) item { EmptyHint("No budgets yet", "Tap + to set a monthly limit for a category. You get a warning at 80 percent and when you go over.") }
+                    if (statuses.isEmpty()) item { EmptyHint(Str.NoBudgetsTitle.t(), Str.NoBudgetsBody.t()) }
                     items(statuses, key = { it.budget.category }) { st -> Panel(Modifier.clickable { edit = PlanEdit.BudgetEdit(st.budget) }) { BudgetBar(st) } }
                 }
                 PlanSection.Repeating -> {
-                    if (store.recurring.isEmpty()) item { EmptyHint("Nothing repeats yet", "Rent, a subscription, a salary: tap + and Namaa adds it on its dates, once each.") }
+                    if (store.recurring.isEmpty()) item { EmptyHint(Str.NoRepeatTitle.t(), Str.NoRepeatBody.t()) }
                     items(store.recurring, key = { it.id }) { r ->
                         Panel(Modifier.clickable { edit = PlanEdit.RecurringEdit(r) }) {
                             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                                 Column(Modifier.weight(1f)) {
-                                    Text(r.category.ifEmpty { "Other" } + if (r.note.isNotBlank()) "  ·  ${r.note}" else "", style = MaterialTheme.typography.titleSmall)
-                                    Text((if (r.frequency == Frequency.Weekly) "Every week" else "Every month") + " from ${prettyDate(r.start)} ${r.start.year}", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                    Text(categoryShown(r.category) + if (r.note.isNotBlank()) "  ·  ${r.note}" else "", style = MaterialTheme.typography.titleSmall)
+                                    Text(Str.FromDate.t(if (r.frequency == Frequency.Weekly) Str.EveryWeek.t() else Str.EveryMonth.t(), prettyDate(r.start) + " " + num(r.start.year)), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                                 }
-                                Text(formatMoney(r.amountMinor), style = MaterialTheme.typography.titleMedium)
+                                Text(money(r.amountMinor), style = MaterialTheme.typography.titleMedium)
                             }
                         }
                     }
@@ -122,28 +123,28 @@ fun PlanScreen(store: NamaaStore, padding: PaddingValues, section: PlanSection, 
                     item {
                         Panel {
                             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                                Column { Text("They owe you", style = MaterialTheme.typography.labelMedium); Text(formatMoney(totals.owedToMeMinor), style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.secondary) }
-                                Column(horizontalAlignment = Alignment.End) { Text("You owe", style = MaterialTheme.typography.labelMedium); Text(formatMoney(totals.iOweMinor), style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.error) }
+                                Column { Text(Str.TheyOweYou.t(), style = MaterialTheme.typography.labelMedium); Text(money(totals.owedToMeMinor), style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.secondary) }
+                                Column(horizontalAlignment = Alignment.End) { Text(Str.YouOwe.t(), style = MaterialTheme.typography.labelMedium); Text(money(totals.iOweMinor), style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.error) }
                             }
                             balanceByPerson(store.debts).forEach { (person, net) ->
                                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                                     Text(person, style = MaterialTheme.typography.bodyMedium)
-                                    Text(if (net > 0) "owes you " + formatMoney(net) else "you owe " + formatMoney(-net), style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
+                                    Text(if (net > 0) Str.OwesYou.t(money(net)) else Str.YouOweAmt.t(money(-net)), style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
                                 }
                             }
                         }
                     }
-                    if (store.debts.isEmpty()) item { EmptyHint("No debts or loans", "Tap + to record money you lent or borrowed. Partial payments are fine.") }
+                    if (store.debts.isEmpty()) item { EmptyHint(Str.NoDebtsTitle.t(), Str.NoDebtsBody.t()) }
                     items(store.debts, key = { it.id }) { debt ->
                         Panel(Modifier.clickable { edit = PlanEdit.DebtEdit(debt) }) {
                             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                                 Column(Modifier.weight(1f)) {
                                     Text(debt.person, style = MaterialTheme.typography.titleSmall)
-                                    Text((if (debt.direction == Direction.TheyOweMe) "Lent" else "Borrowed") + " ${formatMoney(debt.principalMinor)} on ${prettyDate(debt.date)}" + if (debt.note.isNotBlank()) "  ·  ${debt.note}" else "", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                    Text(Str.DebtLine.t(if (debt.direction == Direction.TheyOweMe) Str.Lent.t() else Str.Borrowed.t(), money(debt.principalMinor), prettyDate(debt.date)) + if (debt.note.isNotBlank()) "  ·  ${debt.note}" else "", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                                 }
-                                Text(if (debt.settled) "Settled" else formatMoney(debt.remainingMinor) + " left", style = MaterialTheme.typography.titleSmall)
+                                Text(if (debt.settled) Str.Settled.t() else Str.LeftAmount.t(money(debt.remainingMinor)), style = MaterialTheme.typography.titleSmall)
                             }
-                            if (!debt.settled) TextButton(onClick = { edit = PlanEdit.PayDebt(debt) }) { Text(if (debt.direction == Direction.TheyOweMe) "Record a payment received" else "Record a payment made") }
+                            if (!debt.settled) TextButton(onClick = { edit = PlanEdit.PayDebt(debt) }) { Text(if (debt.direction == Direction.TheyOweMe) Str.PayReceived.t() else Str.PayMade.t()) }
                         }
                     }
                 }
@@ -171,16 +172,16 @@ private fun BudgetDialog(existing: Budget?, onDismiss: () -> Unit, onDelete: (()
     var limit by remember { mutableStateOf(existing?.let { formatMoney(it.limitMinor) } ?: "") }
     val minor = parseMoney(limit)?.takeIf { it > 0 }
     AlertDialog(
-        onDismissRequest = onDismiss, title = { Text(if (existing == null) "New budget" else "Edit budget") },
+        onDismissRequest = onDismiss, title = { Text(if (existing == null) Str.NewBudget.t() else Str.EditBudget.t()) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 OutlinedTextField(category, { category = it }, singleLine = true, label = { Text("Category") }, modifier = Modifier.fillMaxWidth())
-                LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) { items(defaultCategories) { c -> FilterChip(category == c, { category = c }, { Text(c) }) } }
-                OutlinedTextField(limit, { limit = it }, singleLine = true, label = { Text("Limit per month") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal), modifier = Modifier.fillMaxWidth())
+                LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) { items(defaultCategories) { c -> FilterChip(category == c, { category = c }, { Text(categoryShown(c)) }) } }
+                OutlinedTextField(limit, { limit = it }, singleLine = true, label = { Text(Str.LimitPerMonth.t()) }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal), modifier = Modifier.fillMaxWidth())
             }
         },
-        confirmButton = { TextButton(enabled = category.isNotBlank() && minor != null, onClick = { onSave(Budget(category.trim(), minor!!)) }) { Text("Save") } },
-        dismissButton = { Row { onDelete?.let { TextButton(onClick = it) { Text("Delete", color = MaterialTheme.colorScheme.error) } }; TextButton(onClick = onDismiss) { Text("Cancel") } } },
+        confirmButton = { TextButton(enabled = category.isNotBlank() && minor != null, onClick = { onSave(Budget(category.trim(), minor!!)) }) { Text(Str.Save.t()) } },
+        dismissButton = { Row { onDelete?.let { TextButton(onClick = it) { Text(Str.Delete.t(), color = MaterialTheme.colorScheme.error) } }; TextButton(onClick = onDismiss) { Text(Str.Cancel.t()) } } },
     )
 }
 
@@ -195,25 +196,25 @@ private fun RecurringDialog(existing: Recurring?, store: NamaaStore, today: Loca
     var start by remember { mutableStateOf(existing?.start ?: today) }
     val minor = parseMoney(amount)?.takeIf { it > 0 }
     AlertDialog(
-        onDismissRequest = onDismiss, title = { Text(if (existing == null) "New repeating transaction" else "Edit repeating transaction") },
+        onDismissRequest = onDismiss, title = { Text(if (existing == null) Str.NewRepeating.t() else Str.EditRepeating.t()) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) { FilterChip(!income, { income = false }, { Text("Spent") }); FilterChip(income, { income = true }, { Text("Received") }) }
-                OutlinedTextField(amount, { amount = it }, singleLine = true, placeholder = { Text("Amount, e.g. 450") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal), modifier = Modifier.fillMaxWidth())
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) { FilterChip(!income, { income = false }, { Text(Str.ChipSpent.t()) }); FilterChip(income, { income = true }, { Text(Str.ChipReceived.t()) }) }
+                OutlinedTextField(amount, { amount = it }, singleLine = true, placeholder = { Text(Str.AmountHint450.t()) }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal), modifier = Modifier.fillMaxWidth())
                 if (store.accounts.size > 1) LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) { items(store.accounts, key = { it.id }) { a -> FilterChip(accountId == a.id, { accountId = a.id }, { Text(a.name) }) } }
                 OutlinedTextField(category, { category = it }, singleLine = true, placeholder = { Text("Category") }, modifier = Modifier.fillMaxWidth())
-                OutlinedTextField(note, { note = it }, singleLine = true, placeholder = { Text("Note (optional)") }, modifier = Modifier.fillMaxWidth())
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) { FilterChip(frequency == Frequency.Weekly, { frequency = Frequency.Weekly }, { Text("Weekly") }); FilterChip(frequency == Frequency.Monthly, { frequency = Frequency.Monthly }, { Text("Monthly") }) }
-                DateField(start, "Starts") { start = it }
+                OutlinedTextField(note, { note = it }, singleLine = true, placeholder = { Text(Str.NoteOptional.t()) }, modifier = Modifier.fillMaxWidth())
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) { FilterChip(frequency == Frequency.Weekly, { frequency = Frequency.Weekly }, { Text(Str.Weekly.t()) }); FilterChip(frequency == Frequency.Monthly, { frequency = Frequency.Monthly }, { Text(Str.Monthly.t()) }) }
+                DateField(start, Str.Starts.t()) { start = it }
             }
         },
         confirmButton = {
             TextButton(enabled = minor != null, onClick = {
                 // Changing the start of an existing rule restarts it from the new date; what was already added stays.
                 onSave(Recurring(existing?.id ?: newId(), if (income) minor!! else -minor!!, accountId, category.trim(), note.trim(), frequency, start, existing?.lastGenerated?.takeIf { existing.start == start && existing.frequency == frequency }))
-            }) { Text("Save") }
+            }) { Text(Str.Save.t()) }
         },
-        dismissButton = { Row { onDelete?.let { TextButton(onClick = it) { Text("Delete", color = MaterialTheme.colorScheme.error) } }; TextButton(onClick = onDismiss) { Text("Cancel") } } },
+        dismissButton = { Row { onDelete?.let { TextButton(onClick = it) { Text(Str.Delete.t(), color = MaterialTheme.colorScheme.error) } }; TextButton(onClick = onDismiss) { Text(Str.Cancel.t()) } } },
     )
 }
 
@@ -226,19 +227,19 @@ private fun DebtDialog(existing: Debt?, today: LocalDate, onDismiss: () -> Unit,
     var date by remember { mutableStateOf(existing?.date ?: today) }
     val minor = parseMoney(amount)?.takeIf { it > 0 && (existing == null || it >= existing.paidMinor) }
     AlertDialog(
-        onDismissRequest = onDismiss, title = { Text(if (existing == null) "New debt or loan" else "Edit debt or loan") },
+        onDismissRequest = onDismiss, title = { Text(if (existing == null) Str.NewDebt.t() else Str.EditDebt.t()) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) { FilterChip(direction == Direction.TheyOweMe, { direction = Direction.TheyOweMe }, { Text("I lent") }); FilterChip(direction == Direction.IOweThem, { direction = Direction.IOweThem }, { Text("I borrowed") }) }
-                OutlinedTextField(person, { person = it }, singleLine = true, label = { Text("Person") }, modifier = Modifier.fillMaxWidth())
-                OutlinedTextField(amount, { amount = it }, singleLine = true, label = { Text("Amount") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal), modifier = Modifier.fillMaxWidth())
-                OutlinedTextField(note, { note = it }, singleLine = true, placeholder = { Text("Note (optional)") }, modifier = Modifier.fillMaxWidth())
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) { FilterChip(direction == Direction.TheyOweMe, { direction = Direction.TheyOweMe }, { Text(Str.ILent.t()) }); FilterChip(direction == Direction.IOweThem, { direction = Direction.IOweThem }, { Text(Str.IBorrowed.t()) }) }
+                OutlinedTextField(person, { person = it }, singleLine = true, label = { Text(Str.Person.t()) }, modifier = Modifier.fillMaxWidth())
+                OutlinedTextField(amount, { amount = it }, singleLine = true, label = { Text(Str.Amount.t()) }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal), modifier = Modifier.fillMaxWidth())
+                OutlinedTextField(note, { note = it }, singleLine = true, placeholder = { Text(Str.NoteOptional.t()) }, modifier = Modifier.fillMaxWidth())
                 DateField(date) { date = it }
-                if (existing != null && existing.payments.isNotEmpty()) Text("Payments so far: " + existing.payments.joinToString { formatMoney(it.amountMinor) }, style = MaterialTheme.typography.labelMedium)
+                if (existing != null && existing.payments.isNotEmpty()) Text(Str.PaymentsSoFar.t(existing.payments.joinToString { formatMoney(it.amountMinor) }), style = MaterialTheme.typography.labelMedium)
             }
         },
-        confirmButton = { TextButton(enabled = person.isNotBlank() && minor != null, onClick = { onSave(Debt(existing?.id ?: newId(), person.trim(), direction, minor!!, date, note.trim(), existing?.payments.orEmpty())) }) { Text("Save") } },
-        dismissButton = { Row { onDelete?.let { TextButton(onClick = it) { Text("Delete", color = MaterialTheme.colorScheme.error) } }; TextButton(onClick = onDismiss) { Text("Cancel") } } },
+        confirmButton = { TextButton(enabled = person.isNotBlank() && minor != null, onClick = { onSave(Debt(existing?.id ?: newId(), person.trim(), direction, minor!!, date, note.trim(), existing?.payments.orEmpty())) }) { Text(Str.Save.t()) } },
+        dismissButton = { Row { onDelete?.let { TextButton(onClick = it) { Text(Str.Delete.t(), color = MaterialTheme.colorScheme.error) } }; TextButton(onClick = onDismiss) { Text(Str.Cancel.t()) } } },
     )
 }
 
@@ -249,16 +250,16 @@ private fun PaymentDialog(debt: Debt, today: LocalDate, onDismiss: () -> Unit, o
     var date by remember { mutableStateOf(today) }
     val minor = parseMoney(amount)?.takeIf { it > 0 && it <= debt.remainingMinor }
     AlertDialog(
-        onDismissRequest = onDismiss, title = { Text("Payment: ${debt.person}") },
+        onDismissRequest = onDismiss, title = { Text(Str.PaymentTitle.t(debt.person)) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                Text("${formatMoney(debt.remainingMinor)} left", style = MaterialTheme.typography.bodyMedium)
-                OutlinedTextField(amount, { amount = it }, singleLine = true, isError = minor == null, label = { Text("Amount (at most what is left)") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal), modifier = Modifier.fillMaxWidth())
-                OutlinedTextField(note, { note = it }, singleLine = true, placeholder = { Text("Note (optional)") }, modifier = Modifier.fillMaxWidth())
+                Text(Str.LeftAmount.t(money(debt.remainingMinor)), style = MaterialTheme.typography.bodyMedium)
+                OutlinedTextField(amount, { amount = it }, singleLine = true, isError = minor == null, label = { Text(Str.AmountAtMost.t()) }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal), modifier = Modifier.fillMaxWidth())
+                OutlinedTextField(note, { note = it }, singleLine = true, placeholder = { Text(Str.NoteOptional.t()) }, modifier = Modifier.fillMaxWidth())
                 DateField(date) { date = it }
             }
         },
-        confirmButton = { TextButton(enabled = minor != null, onClick = { onSave(debt.withPayment(Payment(date, minor!!, note.trim()))) }) { Text("Save") } },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
+        confirmButton = { TextButton(enabled = minor != null, onClick = { onSave(debt.withPayment(Payment(date, minor!!, note.trim()))) }) { Text(Str.Save.t()) } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(Str.Cancel.t()) } },
     )
 }

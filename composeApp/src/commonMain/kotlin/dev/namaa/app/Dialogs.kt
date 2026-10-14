@@ -1,5 +1,6 @@
 package dev.namaa.app
 
+import dev.namaa.core.Str
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -45,11 +46,11 @@ val defaultCategories = listOf("Food", "Transport", "Home", "Bills", "Health", "
 /** A button that shows the date and opens a calendar to pick another; nobody types a date. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DateField(date: LocalDate, label: String = "Date", onPick: (LocalDate) -> Unit) {
+fun DateField(date: LocalDate, label: String? = null, onPick: (LocalDate) -> Unit) {
     var open by remember { mutableStateOf(false) }
     OutlinedButton(onClick = { open = true }, Modifier.fillMaxWidth()) {
         Icon(Icons.Rounded.CalendarMonth, null)
-        Text("  $label: ${prettyDate(date)} ${date.year}")
+        Text("  ${label ?: Str.DateLabel.t()}: ${prettyDate(date)} ${num(date.year)}")
     }
     if (open) {
         val state = rememberDatePickerState(initialSelectedDateMillis = date.atStartOfDayIn(TimeZone.UTC).toEpochMilliseconds())
@@ -59,9 +60,9 @@ fun DateField(date: LocalDate, label: String = "Date", onPick: (LocalDate) -> Un
                 TextButton(onClick = {
                     state.selectedDateMillis?.let { onPick(Instant.fromEpochMilliseconds(it).toLocalDateTime(TimeZone.UTC).date) }
                     open = false
-                }) { Text("OK") }
+                }) { Text(Str.OK.t()) }
             },
-            dismissButton = { TextButton(onClick = { open = false }) { Text("Cancel") } },
+            dismissButton = { TextButton(onClick = { open = false }) { Text(Str.Cancel.t()) } },
         ) { DatePicker(state) }
     }
 }
@@ -77,34 +78,34 @@ fun TxnDialog(existing: Txn?, startIncome: Boolean, accounts: List<Account>, tod
     val minor = parseMoney(amount)?.takeIf { it > 0 }
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(if (existing == null) "New transaction" else "Edit transaction") },
+        title = { Text(if (existing == null) Str.NewTxn.t() else Str.EditTxn.t()) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    FilterChip(!income, { income = false }, { Text("Spent") })
-                    FilterChip(income, { income = true }, { Text("Received") })
+                    FilterChip(!income, { income = false }, { Text(Str.ChipSpent.t()) })
+                    FilterChip(income, { income = true }, { Text(Str.ChipReceived.t()) })
                 }
-                OutlinedTextField(amount, { amount = it }, singleLine = true, placeholder = { Text("Amount, e.g. 12.50") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal), modifier = Modifier.fillMaxWidth())
+                OutlinedTextField(amount, { amount = it }, singleLine = true, placeholder = { Text(Str.AmountHint1250.t()) }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal), modifier = Modifier.fillMaxWidth())
                 if (accounts.size > 1) LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     items(accounts, key = { it.id }) { a -> FilterChip(accountId == a.id, { accountId = a.id }, { Text(a.name) }) }
                 }
                 OutlinedTextField(category, { category = it }, singleLine = true, placeholder = { Text("Category") }, modifier = Modifier.fillMaxWidth())
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    items(defaultCategories) { c -> FilterChip(category == c, { category = c }, { Text(c) }) }
+                    items(defaultCategories) { c -> FilterChip(category == c, { category = c }, { Text(categoryShown(c)) }) }
                 }
-                OutlinedTextField(note, { note = it }, singleLine = true, placeholder = { Text("Note (optional)") }, modifier = Modifier.fillMaxWidth())
+                OutlinedTextField(note, { note = it }, singleLine = true, placeholder = { Text(Str.NoteOptional.t()) }, modifier = Modifier.fillMaxWidth())
                 DateField(date) { date = it }
             }
         },
         confirmButton = {
             TextButton(enabled = minor != null, onClick = {
                 onSave(Txn(existing?.id ?: "", date, if (income) minor!! else -minor!!, accountId, category.trim(), note.trim(), existing?.transferId ?: ""))
-            }) { Text("Save") }
+            }) { Text(Str.Save.t()) }
         },
         dismissButton = {
             Row {
-                onDelete?.let { TextButton(onClick = it) { Text("Delete", color = MaterialTheme.colorScheme.error) } }
-                TextButton(onClick = onDismiss) { Text("Cancel") }
+                onDelete?.let { TextButton(onClick = it) { Text(Str.Delete.t(), color = MaterialTheme.colorScheme.error) } }
+                TextButton(onClick = onDismiss) { Text(Str.Cancel.t()) }
             }
         },
     )
@@ -120,21 +121,21 @@ fun TransferDialog(accounts: List<Account>, today: LocalDate, onDismiss: () -> U
     val minor = parseMoney(amount)?.takeIf { it > 0 }
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Transfer") },
+        title = { Text(Str.TransferTitle.t()) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                if (accounts.size < 2) Text("Add a second account first: a transfer moves money between two of your accounts.", color = MaterialTheme.colorScheme.error)
-                Text("From", style = MaterialTheme.typography.labelMedium)
+                if (accounts.size < 2) Text(Str.AddSecondAccount.t(), color = MaterialTheme.colorScheme.error)
+                Text(Str.From.t(), style = MaterialTheme.typography.labelMedium)
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) { items(accounts, key = { it.id }) { a -> FilterChip(from == a.id, { from = a.id }, { Text(a.name) }) } }
-                Text("To", style = MaterialTheme.typography.labelMedium)
+                Text(Str.To.t(), style = MaterialTheme.typography.labelMedium)
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) { items(accounts, key = { it.id }) { a -> FilterChip(to == a.id, { to = a.id }, { Text(a.name) }) } }
-                OutlinedTextField(amount, { amount = it }, singleLine = true, placeholder = { Text("Amount, e.g. 50") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal), modifier = Modifier.fillMaxWidth())
-                OutlinedTextField(note, { note = it }, singleLine = true, placeholder = { Text("Note (optional)") }, modifier = Modifier.fillMaxWidth())
+                OutlinedTextField(amount, { amount = it }, singleLine = true, placeholder = { Text(Str.AmountHint50.t()) }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal), modifier = Modifier.fillMaxWidth())
+                OutlinedTextField(note, { note = it }, singleLine = true, placeholder = { Text(Str.NoteOptional.t()) }, modifier = Modifier.fillMaxWidth())
                 DateField(date) { date = it }
             }
         },
-        confirmButton = { TextButton(enabled = minor != null && from != to, onClick = { onSave(from, to, minor!!, date, note.trim()) }) { Text("Move") } },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
+        confirmButton = { TextButton(enabled = minor != null && from != to, onClick = { onSave(from, to, minor!!, date, note.trim()) }) { Text(Str.Move.t()) } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(Str.Cancel.t()) } },
     )
 }
 
@@ -146,19 +147,19 @@ fun AccountDialog(existing: Account?, defaultCurrency: String, onDismiss: () -> 
     val openingMinor = parseMoney(opening)
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(if (existing == null) "New account" else "Edit account") },
+        title = { Text(if (existing == null) Str.NewAccountTitle.t() else Str.EditAccount.t()) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                OutlinedTextField(name, { name = it }, singleLine = true, label = { Text("Name") }, modifier = Modifier.fillMaxWidth())
-                OutlinedTextField(currency, { currency = it }, singleLine = true, label = { Text("Currency") }, modifier = Modifier.fillMaxWidth())
-                OutlinedTextField(opening, { opening = it }, singleLine = true, isError = openingMinor == null, label = { Text("Opening balance") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal), modifier = Modifier.fillMaxWidth())
+                OutlinedTextField(name, { name = it }, singleLine = true, label = { Text(Str.NameLabel.t()) }, modifier = Modifier.fillMaxWidth())
+                OutlinedTextField(currency, { currency = it }, singleLine = true, label = { Text(Str.CurrencyLabel.t()) }, modifier = Modifier.fillMaxWidth())
+                OutlinedTextField(opening, { opening = it }, singleLine = true, isError = openingMinor == null, label = { Text(Str.OpeningBalance.t()) }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal), modifier = Modifier.fillMaxWidth())
             }
         },
         confirmButton = {
             TextButton(enabled = name.isNotBlank() && currency.isNotBlank() && openingMinor != null, onClick = {
                 onSave(Account(existing?.id ?: newId(), name.trim(), currency.trim().uppercase(), openingMinor!!))
-            }) { Text("Save") }
+            }) { Text(Str.Save.t()) }
         },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(Str.Cancel.t()) } },
     )
 }

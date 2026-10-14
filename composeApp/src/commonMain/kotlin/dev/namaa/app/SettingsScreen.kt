@@ -1,5 +1,7 @@
 package dev.namaa.app
 
+import dev.namaa.core.FolderNote
+import dev.namaa.core.Str
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -39,49 +41,67 @@ fun SettingsScreen(store: NamaaStore, onBack: () -> Unit, onAbout: () -> Unit, o
     var confirm by remember { mutableStateOf<Path?>(null) }
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
-        topBar = { TopAppBar(title = { Text("Settings") }, navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Rounded.ArrowBack, "Back") } }) },
+        topBar = { TopAppBar(title = { Text(Str.SettingsTitle.t()) }, navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Rounded.ArrowBack, Str.Back.t()) } }) },
     ) { padding ->
         Column(Modifier.fillMaxSize().padding(padding).padding(16.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Panel {
-                Text("Look", style = MaterialTheme.typography.titleSmall)
+                Text(Str.Look.t(), style = MaterialTheme.typography.titleSmall)
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    listOf("system" to "System", "light" to "Light", "dark" to "Dark").forEach { (key, label) ->
-                        FilterChip(store.prefs.theme == key, { store.updatePrefs { it.copy(theme = key) } }, { Text(label) })
+                    listOf("system" to Str.ThemeSystem, "light" to Str.ThemeLight, "dark" to Str.ThemeDark).forEach { (key, label) ->
+                        FilterChip(store.prefs.theme == key, { store.updatePrefs { it.copy(theme = key) } }, { Text(label.t()) })
                     }
                 }
-                Text("Default currency", style = MaterialTheme.typography.titleSmall)
+                Text(Str.LanguageTitle.t(), style = MaterialTheme.typography.titleSmall)
+                LanguageChips(store)
+                Text(Str.DefaultCurrency.t(), style = MaterialTheme.typography.titleSmall)
                 Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) { currencies.take(3).forEach { c -> FilterChip(store.prefs.currency == c, { store.setCurrency(c) }, { Text(c) }) } }
                 Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) { currencies.drop(3).forEach { c -> FilterChip(store.prefs.currency == c, { store.setCurrency(c) }, { Text(c) }) } }
             }
             Panel {
-                Text("Zimam folder", style = MaterialTheme.typography.titleSmall)
+                Text(Str.ZimamFolderTitle.t(), style = MaterialTheme.typography.titleSmall)
                 Text(
-                    if (loc.shared) "Namaa keeps your accounts and transactions in ${loc.root}. They survive reinstalling the app."
-                    else "Namaa keeps its data inside the app. " + if (store.askAccess != null) "Allow access to all files to use a visible Zimam/Namaa folder instead, so your data survives reinstalling the app." else "",
+                    if (loc.shared) Str.DataShared.raw(loc.root)
+                    else Str.DataPrivate.t() + if (store.askAccess != null) " " + Str.DataPrivateAsk.t() else "",
                     style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
-                if (!loc.shared) store.askAccess?.let { ask -> Button(onClick = ask) { Text("Use the Zimam/Namaa folder") } }
-                loc.message?.let { Text(it, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.error) }
+                if (!loc.shared) store.askAccess?.let { ask -> Button(onClick = ask) { Text(Str.UseFolderBtn.t()) } }
+                loc.message?.let { note -> Text(if (note.kind == FolderNote.Kind.Unreachable) Str.FolderUnreachable.raw(note.a) else Str.FolderVerifyFailed.raw(note.a, note.b), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.error) }
                 // The old folders stay as a backup after the copy; removing one asks first and checks every file again.
                 val removable = remember(store.folderTick, loc.root) { loc.removableOldFolders() }
                 removable.forEach { old ->
-                    Text("Your earlier folder $old was copied into the Zimam folder and checked. It is still there as a backup.", style = MaterialTheme.typography.bodyMedium)
-                    OutlinedButton(onClick = { confirm = old }) { Text("Remove the old folder") }
+                    Text(Str.EarlierFolder.raw(old), style = MaterialTheme.typography.bodyMedium)
+                    OutlinedButton(onClick = { confirm = old }) { Text(Str.RemoveOldFolder.t()) }
                 }
             }
             Panel {
-                OutlinedButton(onClick = onTour) { Text("Show the tour again") }
-                OutlinedButton(onClick = onAbout) { Text("About Namaa") }
+                OutlinedButton(onClick = onTour) { Text(Str.ShowTour.t()) }
+                OutlinedButton(onClick = onAbout) { Text(Str.AboutNamaa.t()) }
             }
         }
     }
     confirm?.let { old ->
         AlertDialog(
             onDismissRequest = { confirm = null },
-            title = { Text("Remove the old folder?") },
-            text = { Text("Namaa checks every file of $old once more and removes it only if each one is in the Zimam folder. This cannot be undone.") },
-            confirmButton = { TextButton(onClick = { loc.removeOldFolder(old); store.useBook(store.book); confirm = null }) { Text("Check and remove") } },
-            dismissButton = { TextButton(onClick = { confirm = null }) { Text("Keep it") } },
+            title = { Text(Str.RemoveOldQ.t()) },
+            text = { Text(Str.RemoveOldQBody.raw(old)) },
+            confirmButton = { TextButton(onClick = { loc.removeOldFolder(old); store.useBook(store.book); confirm = null }) { Text(Str.CheckAndRemove.t()) } },
+            dismissButton = { TextButton(onClick = { confirm = null }) { Text(Str.KeepIt.t()) } },
         )
+    }
+}
+
+/** Language (System, English, العربية) and the digit style; both apply at once. */
+@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
+@Composable
+fun LanguageChips(store: NamaaStore) {
+    androidx.compose.foundation.layout.FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        listOf("system" to Str.ThemeSystem.t(), "en" to Str.LangEnglish.t(), "ar" to Str.LangArabic.t()).forEach { (k, v) ->
+            FilterChip(store.prefs.lang == k, { store.updatePrefs { it.copy(lang = k) } }, { Text(v) })
+        }
+    }
+    Text(Str.DigitsTitle.t(), style = MaterialTheme.typography.labelLarge)
+    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        FilterChip(!store.prefs.arabicDigits, { store.updatePrefs { it.copy(arabicDigits = false) } }, { Text(Str.DigitsWestern.text(dev.namaa.core.Lang.En)) })
+        FilterChip(store.prefs.arabicDigits, { store.updatePrefs { it.copy(arabicDigits = true) } }, { Text(Str.DigitsArabic.text(dev.namaa.core.Lang.En)) })
     }
 }

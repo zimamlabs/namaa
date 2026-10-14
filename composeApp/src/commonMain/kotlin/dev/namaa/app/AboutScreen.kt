@@ -1,5 +1,6 @@
 package dev.namaa.app
 
+import dev.namaa.core.Str
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -38,34 +39,34 @@ fun AboutScreen(onBack: () -> Unit, onTour: () -> Unit) {
     val links = LocalUriHandler.current
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
-        topBar = { TopAppBar(title = { Text("About") }, navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Rounded.ArrowBack, "Back") } }, colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)) },
+        topBar = { TopAppBar(title = { Text(Str.AboutTitle.t()) }, navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Rounded.ArrowBack, Str.Back.t()) } }, colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)) },
     ) { padding ->
         Column(Modifier.fillMaxSize().padding(padding).verticalScroll(rememberScrollState()).padding(horizontal = 16.dp, vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
             Column(Modifier.fillMaxWidth().heroGlow().padding(vertical = 28.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 BrandMark(Modifier.size(112.dp))
-                Text("Namaa", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.SemiBold)
-                Text("ذمّة", style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.primary)
-                Text("Private money, in plain files", style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
-                Text("Version $APP_VERSION", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(Str.AppName.t(), style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.SemiBold)
+                if (lang() == dev.namaa.core.Lang.En) Text("نماء", style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.primary)
+                Text(Str.AboutTagline.t(), style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
+                Text(Str.VersionBig.t(APP_VERSION), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
-            Panel { Text("Namaa keeps your accounts, spending, budgets and debts in a folder of plain files you own. It works offline and opens in any editor or spreadsheet.", style = MaterialTheme.typography.bodyMedium) }
+            Panel { Text(Str.AboutBody.t(), style = MaterialTheme.typography.bodyMedium) }
             Panel {
-                Text("What's new", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
-                ReleaseNotes.forVersion(APP_VERSION).forEach { Text("•  $it", style = MaterialTheme.typography.bodyMedium) }
-                OutlinedButton(onClick = onTour) { Text("Show the tour again") }
-            }
-            Panel {
-                Text("Private by design", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
-                Text("No account, no tracking, nothing sent anywhere. Your data stays in Zimam/Namaa on your device.", style = MaterialTheme.typography.bodyMedium)
+                Text(Str.WhatsNew.t(), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+                ReleaseNotes.forVersion(APP_VERSION, lang()).forEach { Text("•  ${num(it)}", style = MaterialTheme.typography.bodyMedium) }
+                OutlinedButton(onClick = onTour) { Text(Str.ShowTour.t()) }
             }
             Panel {
-                Text("Links", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
-                TextButton(onClick = { links.openUri(REPO) }) { Text("Repository") }
-                TextButton(onClick = { links.openUri("$REPO/releases") }) { Text("Releases") }
-                TextButton(onClick = { links.openUri("$REPO/issues") }) { Text("Report an issue") }
-                TextButton(onClick = { links.openUri("$REPO/blob/main/LICENSE") }) { Text("Licence (MIT)") }
+                Text(Str.PrivateTitle.t(), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+                Text(Str.PrivateBody.t(), style = MaterialTheme.typography.bodyMedium)
             }
-            Text("by Zimam Labs", Modifier.fillMaxWidth().padding(8.dp), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary, textAlign = TextAlign.Center)
+            Panel {
+                Text(Str.LinksTitle.t(), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+                TextButton(onClick = { links.openUri(REPO) }) { Text(Str.LinkRepo.t()) }
+                TextButton(onClick = { links.openUri("$REPO/releases") }) { Text(Str.LinkReleases.t()) }
+                TextButton(onClick = { links.openUri("$REPO/issues") }) { Text(Str.LinkIssue.t()) }
+                TextButton(onClick = { links.openUri("$REPO/blob/main/LICENSE") }) { Text(Str.LinkLicence.t()) }
+            }
+            Text(Str.ByLabs.t(), Modifier.fillMaxWidth().padding(8.dp), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary, textAlign = TextAlign.Center)
         }
     }
 }

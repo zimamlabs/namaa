@@ -1,5 +1,6 @@
 package dev.namaa.app
 
+import dev.namaa.core.Str
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
@@ -50,8 +51,8 @@ fun Splash(onDone: () -> Unit) {
     Column(Modifier.fillMaxSize().background(Ink), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
         BrandMark(Modifier.size(150.dp).graphicsLayer { val k = 0.88f + 0.12f * moon.value; scaleX = k; scaleY = k; alpha = moon.value })
         Spacer(Modifier.height(32.dp))
-        Text("Namaa", Modifier.alpha(name.value).offset(y = ((1f - name.value) * 14f).dp), color = Cream, fontSize = 30.sp, fontWeight = FontWeight.SemiBold)
+        Text(Str.AppName.t(), Modifier.alpha(name.value).offset(y = ((1f - name.value) * 14f).dp), color = Cream, fontSize = 30.sp, fontWeight = FontWeight.SemiBold)
         Spacer(Modifier.height(4.dp))
-        Text("by Zimam", Modifier.alpha(name.value).offset(y = ((1f - name.value) * 14f).dp), color = Orange, fontSize = 14.sp, fontWeight = FontWeight.Medium, letterSpacing = 1.sp)
+        Text(Str.SplashBy.t(), Modifier.alpha(name.value).offset(y = ((1f - name.value) * 14f).dp), color = Orange, fontSize = 14.sp, fontWeight = FontWeight.Medium, letterSpacing = 1.sp)
     }
 }

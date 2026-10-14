@@ -1,5 +1,6 @@
 package dev.namaa.app
 
+import dev.namaa.core.Str
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -58,8 +59,8 @@ fun DonutChart(slices: List<Pair<String, Long>>, centreTop: String, centreBottom
             shown.forEachIndexed { i, (name, v) ->
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Box(Modifier.size(10.dp).also { }) { Canvas(Modifier.size(10.dp)) { drawCircle(chartColors[i % chartColors.size]) } }
-                    Text(name, Modifier.weight(1f), style = MaterialTheme.typography.bodySmall, maxLines = 1)
-                    Text("${(100L * v / total)}%", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(categoryShown(name), Modifier.weight(1f), style = MaterialTheme.typography.bodySmall, maxLines = 1)
+                    Text(num("${(100L * v / total)}%"), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
         }
@@ -79,7 +80,8 @@ fun MonthBars(months: List<MonthTotal>, modifier: Modifier = Modifier) {
             val slot = size.width / months.size
             val bar = slot * 0.26f
             months.forEachIndexed { i, m ->
-                val x = slot * i + slot / 2
+                // In a right-to-left layout the oldest month is on the right, like the labels beneath.
+                val x = slot * (if (layoutDirection == androidx.compose.ui.unit.LayoutDirection.Rtl) months.size - 1 - i else i) + slot / 2
                 val hi = size.height * 0.94f * m.incomeMinor / top
                 val hs = size.height * 0.94f * m.spentMinor / top
                 if (hi > 0) drawRoundRect(income, Offset(x - bar - 2f, size.height - hi), Size(bar, hi), CornerRadius(6f))
@@ -90,9 +92,9 @@ fun MonthBars(months: List<MonthTotal>, modifier: Modifier = Modifier) {
             months.forEach { Text(monthName(it.month), Modifier.weight(1f), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = androidx.compose.ui.text.style.TextAlign.Center) }
         }
         Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-            Legend(income, "Income"); Legend(spent, "Spent")
+            Legend(income, Str.Income.t()); Legend(spent, Str.Spent.t())
             Spacer1()
-            Text("Top: " + formatMoney(top), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(Str.ChartTop.t(formatMoney(top).let { num(it) }), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }
