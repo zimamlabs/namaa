@@ -13,7 +13,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 
-const val APP_VERSION = "0.1.1"
+const val APP_VERSION = "0.1.2"
 
 @Composable
 fun ZimmaApp(store: ZimmaStore) {

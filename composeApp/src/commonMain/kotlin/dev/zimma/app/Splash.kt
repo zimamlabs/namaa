@@ -7,6 +7,10 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -44,12 +48,14 @@ fun Splash(onDone: () -> Unit) {
         onDone()
     }
     Column(Modifier.fillMaxSize().background(Ink), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
-        Canvas(Modifier.size(150.dp)) {
+        Canvas(Modifier.size(150.dp).graphicsLayer { val k = 0.88f + 0.12f * moon.value; scaleX = k; scaleY = k }) {
             val u = size.width / 512f
             drawRoundRect(Cream.copy(alpha = moon.value), Offset(110f * u, 170f * u), Size(292f * u, 200f * u), CornerRadius(40f * u), style = Stroke(38f * u))
             zimamDot(Offset(350f * u, 270f * u), 70f * u * pop.value, Orange)
         }
-        Text("Zimma", Modifier.alpha(name.value), color = Cream, fontSize = 30.sp, fontWeight = FontWeight.SemiBold)
-        Text("by Zimam", Modifier.alpha(name.value), color = Orange, fontSize = 14.sp, fontWeight = FontWeight.Medium, letterSpacing = 1.sp)
+        Spacer(Modifier.height(32.dp))
+        Text("Zimma", Modifier.alpha(name.value).offset(y = ((1f - name.value) * 14f).dp), color = Cream, fontSize = 30.sp, fontWeight = FontWeight.SemiBold)
+        Spacer(Modifier.height(4.dp))
+        Text("by Zimam", Modifier.alpha(name.value).offset(y = ((1f - name.value) * 14f).dp), color = Orange, fontSize = 14.sp, fontWeight = FontWeight.Medium, letterSpacing = 1.sp)
     }
 }
