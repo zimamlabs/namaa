@@ -6,7 +6,8 @@ data class MonthSummary(val incomeMinor: Long, val expenseMinor: Long, val byCat
 }
 
 fun monthSummary(txns: List<Txn>, year: Int, month: Int): MonthSummary {
-    val inMonth = txns.filter { it.date.year == year && it.date.monthNumber == month }
+    // A transfer moves money between your own accounts: it is neither income nor spending.
+    val inMonth = txns.filter { it.date.year == year && it.date.monthNumber == month && it.transferId.isEmpty() }
     val spending = inMonth.filter { it.amountMinor < 0 }
     return MonthSummary(
         incomeMinor = inMonth.filter { it.amountMinor > 0 }.sumOf { it.amountMinor },
@@ -39,3 +40,14 @@ fun shiftMonth(year: Int, month: Int, delta: Int): Pair<Int, Int> {
     val index = year * 12 + (month - 1) + delta
     return Pair(index.floorDiv(12), index.mod(12) + 1)
 }
+
+/** Income and spending for one month, for the bar chart. */
+data class MonthTotal(val year: Int, val month: Int, val incomeMinor: Long, val spentMinor: Long)
+
+/** The [count] months ending at [year]/[month], oldest first; months with nothing are zero. */
+fun monthlyTotals(txns: List<Txn>, year: Int, month: Int, count: Int = 6): List<MonthTotal> =
+    (count - 1 downTo 0).map { back ->
+        val (y, m) = shiftMonth(year, month, -back)
+        val s = monthSummary(txns, y, m)
+        MonthTotal(y, m, s.incomeMinor, -s.expenseMinor)
+    }
