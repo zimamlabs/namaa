@@ -1,5 +1,6 @@
 package dev.namaa.app
 
+import dev.namaa.core.Str
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -60,25 +61,25 @@ fun TransactionsScreen(store: NamaaStore, padding: PaddingValues, onEdit: (Txn) 
         item {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    OutlinedTextField(filter.text, { filter = filter.copy(text = it) }, Modifier.weight(1f), singleLine = true, placeholder = { Text("Search category, note or amount") }, leadingIcon = { Icon(Icons.Rounded.Search, null) })
-                    FilterChip(open || filter.category.isNotBlank() || filter.accountId.isNotBlank() || filter.from != null || filter.to != null, { open = !open }, { Text("Filters") }, leadingIcon = { Icon(Icons.Rounded.FilterList, null, Modifier.size(18.dp)) })
+                    OutlinedTextField(filter.text, { filter = filter.copy(text = it) }, Modifier.weight(1f), singleLine = true, placeholder = { Text(Str.SearchHint.t()) }, leadingIcon = { Icon(Icons.Rounded.Search, null) })
+                    FilterChip(open || filter.category.isNotBlank() || filter.accountId.isNotBlank() || filter.from != null || filter.to != null, { open = !open }, { Text(Str.Filters.t()) }, leadingIcon = { Icon(Icons.Rounded.FilterList, null, Modifier.size(18.dp)) })
                 }
                 if (open) {
-                    LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) { items(categories) { c -> FilterChip(filter.category == c, { filter = filter.copy(category = if (filter.category == c) "" else c) }, { Text(c) }) } }
+                    LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) { items(categories) { c -> FilterChip(filter.category == c, { filter = filter.copy(category = if (filter.category == c) "" else c) }, { Text(categoryShown(c)) }) } }
                     if (store.accounts.size > 1) LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) { items(store.accounts, key = { it.id }) { a -> FilterChip(filter.accountId == a.id, { filter = filter.copy(accountId = if (filter.accountId == a.id) "" else a.id) }, { Text(a.name) }) } }
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Box(Modifier.weight(1f)) { DateField(filter.from ?: store.today, "From") { filter = filter.copy(from = it) } }
-                        Box(Modifier.weight(1f)) { DateField(filter.to ?: store.today, "To") { filter = filter.copy(to = it) } }
+                        Box(Modifier.weight(1f)) { DateField(filter.from ?: store.today, Str.From.t()) { filter = filter.copy(from = it) } }
+                        Box(Modifier.weight(1f)) { DateField(filter.to ?: store.today, Str.To.t()) { filter = filter.copy(to = it) } }
                     }
                 }
                 if (filter.active) Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text("${shown.size} of ${store.txns.size} shown", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    TextButton(onClick = { filter = TxnFilter() }) { Text("Clear filters") }
+                    Text(Str.ShownOf.t(shown.size, store.txns.size), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    TextButton(onClick = { filter = TxnFilter() }) { Text(Str.ClearFilters.t()) }
                 }
             }
         }
-        if (store.txns.isEmpty()) item { EmptyHint("No transactions yet", "Tap + to add one. They are saved per year in <year>.csv.") }
-        else if (shown.isEmpty()) item { EmptyHint("Nothing matches", "Try fewer filters.") }
+        if (store.txns.isEmpty()) item { EmptyHint(Str.NoTxnTitle.t(), "Tap + to add one. They are saved per year in <year>.csv.") }
+        else if (shown.isEmpty()) item { EmptyHint(Str.NothingMatches.t(), Str.TryFewer.t()) }
         items(shown.take(500), key = { it.id }) { t -> TxnRow(t, store.accounts) { onEdit(t) } }
     }
 }
@@ -91,9 +92,9 @@ fun AccountsScreen(store: NamaaStore, padding: PaddingValues, onEdit: (Account) 
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                     Column {
                         Text(a.name, style = MaterialTheme.typography.titleMedium)
-                        Text(a.currency + if (a.openingMinor != 0L) "  ·  opened with ${formatMoney(a.openingMinor)}" else "", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(a.currency + if (a.openingMinor != 0L) "  ·  " + Str.OpenedWith.t(money(a.openingMinor)) else "", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
-                    Text(formatMoney(balance(a, store.txns)), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
+                    Text(money(balance(a, store.txns)), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
                 }
             }
         }
@@ -109,40 +110,40 @@ fun ReportScreen(store: NamaaStore, padding: PaddingValues) {
     LazyColumn(Modifier.fillMaxSize().padding(padding), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         item {
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
-                IconButton(onClick = { shown = shiftMonth(year, month, -1) }) { Icon(Icons.Rounded.ChevronLeft, "Previous month") }
-                Text("${monthName(month)} $year", style = MaterialTheme.typography.titleLarge)
-                IconButton(onClick = { shown = shiftMonth(year, month, 1) }) { Icon(Icons.Rounded.ChevronRight, "Next month") }
+                IconButton(onClick = { shown = shiftMonth(year, month, -1) }) { Icon(Icons.Rounded.ChevronLeft, Str.PrevMonth.t()) }
+                Text(num("${monthName(month)} $year"), style = MaterialTheme.typography.titleLarge)
+                IconButton(onClick = { shown = shiftMonth(year, month, 1) }) { Icon(Icons.Rounded.ChevronRight, Str.NextMonth.t()) }
             }
         }
         item {
             Panel {
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Column { Text("Income", style = MaterialTheme.typography.labelMedium); Text(formatMoney(s.incomeMinor), style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.secondary) }
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) { Text("Spent", style = MaterialTheme.typography.labelMedium); Text(formatMoney(-s.expenseMinor), style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.error) }
-                    Column(horizontalAlignment = Alignment.End) { Text("Left", style = MaterialTheme.typography.labelMedium); Text(formatMoney(s.netMinor), style = MaterialTheme.typography.titleLarge) }
+                    Column { Text(Str.Income.t(), style = MaterialTheme.typography.labelMedium); Text(money(s.incomeMinor), style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.secondary) }
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) { Text(Str.Spent.t(), style = MaterialTheme.typography.labelMedium); Text(money(-s.expenseMinor), style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.error) }
+                    Column(horizontalAlignment = Alignment.End) { Text(Str.Left.t(), style = MaterialTheme.typography.labelMedium); Text(money(s.netMinor), style = MaterialTheme.typography.titleLarge) }
                 }
             }
         }
         item {
             var saved by remember { mutableStateOf<String?>(null) }
             Panel {
-                Text("Export", style = MaterialTheme.typography.titleSmall)
+                Text(Str.Export.t(), style = MaterialTheme.typography.titleSmall)
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    OutlinedButton(onClick = { saved = store.export(monthFileName(year, month), store.txns.filter { it.date.year == year && it.date.monthNumber == month }) }) { Text("${monthName(month)} $year") }
-                    OutlinedButton(onClick = { saved = store.export(yearFileName(year), store.txns.filter { it.date.year == year }) }) { Text("All of $year") }
+                    OutlinedButton(onClick = { saved = store.export(monthFileName(year, month), store.txns.filter { it.date.year == year && it.date.monthNumber == month }) }) { Text(num("${monthName(month)} $year")) }
+                    OutlinedButton(onClick = { saved = store.export(yearFileName(year), store.txns.filter { it.date.year == year }) }) { Text(Str.AllOfYear.t(year)) }
                 }
-                saved?.let { Text("Saved to $it", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+                saved?.let { Text(Str.SavedTo.raw(it), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
             }
         }
-        if (s.byCategory.isEmpty()) item { EmptyHint("Nothing spent this month", "Spending by category shows up here.") } else item {
+        if (s.byCategory.isEmpty()) item { EmptyHint(Str.NothingSpentTitle.t(), Str.NothingSpentBody.t()) } else item {
             Panel {
-                Text("Spending by category", style = MaterialTheme.typography.titleSmall)
+                Text(Str.SpendingByCategory.t(), style = MaterialTheme.typography.titleSmall)
                 val top = -s.byCategory.first().second
                 s.byCategory.forEach { (cat, amount) ->
                     Column {
                         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                            Text(cat, style = MaterialTheme.typography.bodyMedium)
-                            Text(formatMoney(-amount), style = MaterialTheme.typography.bodyMedium)
+                            Text(categoryShown(cat), style = MaterialTheme.typography.bodyMedium)
+                            Text(money(-amount), style = MaterialTheme.typography.bodyMedium)
                         }
                         Box(Modifier.fillMaxWidth().height(6.dp).clip(RoundedCornerShape(3.dp)).background(MaterialTheme.colorScheme.surfaceContainerHigh)) {
                             Box(Modifier.fillMaxWidth((-amount).toFloat() / top).height(6.dp).clip(RoundedCornerShape(3.dp)).background(MaterialTheme.colorScheme.primary))

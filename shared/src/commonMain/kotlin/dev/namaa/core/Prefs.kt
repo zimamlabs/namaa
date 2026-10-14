@@ -7,7 +7,7 @@ import okio.Path
 
 /** Settings that belong to this install, not to the data folder: they stay put when the folder moves. */
 @Serializable
-data class Prefs(val lastSeenVersion: String = "", val tourDone: Boolean = false, val theme: String = "system", val currency: String = "USD")
+data class Prefs(val lastSeenVersion: String = "", val tourDone: Boolean = false, val theme: String = "system", val currency: String = "USD", val lang: String = "system", val arabicDigits: Boolean = false)
 
 class PrefsFile(private val fs: FileSystem, private val path: Path) {
     private val json = Json { prettyPrint = true; ignoreUnknownKeys = true; encodeDefaults = true }

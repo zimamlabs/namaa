@@ -24,9 +24,9 @@ fun formatMoney(minor: Long): String {
     return (if (minor < 0) "-" else "") + (abs / 100).toString() + "." + (abs % 100).toString().padStart(2, '0')
 }
 
-/** Reads "12.5", "12,50" or "-3" as minor units; null when it is not a number. */
+/** Reads "12.5", "12,50", "-3" or the same in Arabic-Indic digits ("١٢٫٥") as minor units; null when it is not a number. */
 fun parseMoney(text: String): Long? {
-    val t = text.trim().replace(',', '.')
+    val t = text.trim().map { if (it in '٠'..'٩') '0' + (it - '٠') else if (it in '۰'..'۹') '0' + (it - '۰') else it }.joinToString("").replace('٫', '.').replace('٬', ',').replace(',', '.')
     val neg = t.startsWith("-")
     val body = t.removePrefix("-").removePrefix("+")
     if (body.isEmpty() || body.count { it == '.' } > 1 || body.any { !it.isDigit() && it != '.' }) return null

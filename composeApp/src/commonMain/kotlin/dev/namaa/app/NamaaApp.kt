@@ -1,5 +1,11 @@
 package dev.namaa.app
 
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.unit.LayoutDirection
+import dev.namaa.core.I18n
+import dev.namaa.core.Lang
+import dev.namaa.core.Str
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
@@ -38,10 +44,10 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import dev.namaa.core.Account
 import dev.namaa.core.Txn
 
-const val APP_VERSION = "0.4.0"
+const val APP_VERSION = "0.5.0"
 
-enum class Tab(val label: String, val icon: ImageVector) {
-    Home("Home", Icons.Rounded.Home), Money("Money", Icons.Rounded.ReceiptLong), Accounts("Accounts", Icons.Rounded.AccountBalanceWallet), Plan("Plan", Icons.Rounded.Savings), Report("Report", Icons.Rounded.BarChart),
+enum class Tab(val label: Str, val icon: ImageVector) {
+    Home(Str.TabHome, Icons.Rounded.Home), Money(Str.TabMoney, Icons.Rounded.ReceiptLong), Accounts(Str.TabAccounts, Icons.Rounded.AccountBalanceWallet), Plan(Str.TabPlan, Icons.Rounded.Savings), Report(Str.TabReport, Icons.Rounded.BarChart),
 }
 
 /** Which dialog is open: a new or edited transaction, a transfer, or a new or renamed account. */
@@ -56,7 +62,11 @@ private enum class Page { Settings, About }
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NamaaApp(store: NamaaStore) {
-    NamaaTheme(store.prefs.theme) {
+    val language = I18n.resolve(store.prefs.lang, systemLanguage())
+    CompositionLocalProvider(
+        LocalAppLocale provides AppLocale(language, store.prefs.arabicDigits),
+        LocalLayoutDirection provides if (language == Lang.Ar) LayoutDirection.Rtl else LayoutDirection.Ltr,
+    ) { NamaaTheme(store.prefs.theme) {
         var splash by remember { mutableStateOf(true) }
         var tab by remember { mutableStateOf(Tab.Home) }
         var page by remember { mutableStateOf<Page?>(null) }
@@ -72,20 +82,20 @@ fun NamaaApp(store: NamaaStore) {
                 null -> Scaffold(
                     containerColor = MaterialTheme.colorScheme.background,
                     topBar = {
-                        TopAppBar(title = { Text(if (tab == Tab.Home) "Namaa" else tab.label) }, actions = {
-                            IconButton(onClick = { page = Page.Settings }) { Icon(Icons.Rounded.Settings, "Settings") }
+                        TopAppBar(title = { Text(if (tab == Tab.Home) Str.AppName.t() else tab.label.t()) }, actions = {
+                            IconButton(onClick = { page = Page.Settings }) { Icon(Icons.Rounded.Settings, Str.SettingsTitle.t()) }
                         })
                     },
                     bottomBar = {
                         NavigationBar(containerColor = MaterialTheme.colorScheme.surfaceContainer) {
-                            Tab.entries.forEach { t -> NavigationBarItem(tab == t, { tab = t }, { Icon(t.icon, t.label) }, label = { Text(t.label) }, colors = NavigationBarItemDefaults.colors(indicatorColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.18f), selectedIconColor = MaterialTheme.colorScheme.primary, selectedTextColor = MaterialTheme.colorScheme.primary)) }
+                            Tab.entries.forEach { t -> NavigationBarItem(tab == t, { tab = t }, { Icon(t.icon, t.label.t()) }, label = { Text(t.label.t()) }, colors = NavigationBarItemDefaults.colors(indicatorColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.18f), selectedIconColor = MaterialTheme.colorScheme.primary, selectedTextColor = MaterialTheme.colorScheme.primary)) }
                         }
                     },
                     floatingActionButton = {
                         when (tab) {
-                            Tab.Money -> FloatingActionButton(onClick = { editing = Editing.Transaction(null) }) { Icon(Icons.Rounded.Add, "New transaction") }
-                            Tab.Accounts -> FloatingActionButton(onClick = { editing = Editing.AccountEdit(null) }) { Icon(Icons.Rounded.Add, "New account") }
-                            Tab.Plan -> FloatingActionButton(onClick = { planAdd++ }) { Icon(Icons.Rounded.Add, "Add") }
+                            Tab.Money -> FloatingActionButton(onClick = { editing = Editing.Transaction(null) }) { Icon(Icons.Rounded.Add, Str.NewTransactionFab.t()) }
+                            Tab.Accounts -> FloatingActionButton(onClick = { editing = Editing.AccountEdit(null) }) { Icon(Icons.Rounded.Add, Str.NewAccountFab.t()) }
+                            Tab.Plan -> FloatingActionButton(onClick = { planAdd++ }) { Icon(Icons.Rounded.Add, Str.AddFab.t()) }
                             else -> {}
                         }
                     },
@@ -115,5 +125,5 @@ fun NamaaApp(store: NamaaStore) {
             AnimatedVisibility(splash, exit = fadeOut()) { Splash { splash = false } }
             if (!splash) WelcomeHost(store)
         }
-    }
+    } }
 }

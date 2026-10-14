@@ -46,8 +46,8 @@ fun Panel(modifier: Modifier = Modifier, content: @Composable () -> Unit) {
 
 /** A soft orange glow, drawn behind a hero area. */
 fun Modifier.heroGlow(): Modifier = this.drawBehind {
-    drawRect(Brush.radialGradient(listOf(Color(0xFFFF5A1F).copy(alpha = 0.28f), Color.Transparent), center = Offset(size.width * 0.85f, 0f), radius = size.width * 0.75f))
-    drawRect(Brush.radialGradient(listOf(Color(0xFFFF5A1F).copy(alpha = 0.10f), Color.Transparent), center = Offset(size.width * 0.1f, size.height), radius = size.width * 0.6f))
+    drawRect(Brush.radialGradient(listOf(Color(0xFFFF5A1F).copy(alpha = 0.28f), Color.Transparent), center = Offset(size.width * (if (layoutDirection == androidx.compose.ui.unit.LayoutDirection.Rtl) 0.15f else 0.85f), 0f), radius = size.width * 0.75f))
+    drawRect(Brush.radialGradient(listOf(Color(0xFFFF5A1F).copy(alpha = 0.10f), Color.Transparent), center = Offset(size.width * (if (layoutDirection == androidx.compose.ui.unit.LayoutDirection.Rtl) 0.9f else 0.1f), size.height), radius = size.width * 0.6f))
 }
 
 @Composable
@@ -59,8 +59,8 @@ fun EmptyHint(title: String, hint: String) {
     }
 }
 
-fun prettyDate(d: LocalDate): String = "${dayName(d.dayOfWeek)} ${d.dayOfMonth} ${monthName(d.monthNumber)}"
+@Composable
+fun prettyDate(d: LocalDate): String { val l = lang(); return num("${dev.namaa.core.dayName(d.dayOfWeek.ordinal, l)} ${d.dayOfMonth} ${dev.namaa.core.monthName(d.monthNumber, l)}") }
 
-fun dayName(d: DayOfWeek): String = listOf("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")[d.ordinal]
-
-fun monthName(n: Int): String = listOf("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")[(n - 1).coerceIn(0, 11)]
+@Composable
+fun monthName(n: Int): String = dev.namaa.core.monthName(n, lang())

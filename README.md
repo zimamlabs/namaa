@@ -29,7 +29,7 @@ Namaa (نماء, growth) keeps your accounts and your income and spending in a f
 
 ## Languages
 
-English today. Arabic and right-to-left screens are being added; this line will say when they are in.
+English and Arabic (العربية), with a right-to-left layout. Settings has a Language choice (System, English, العربية) and a digit style (0 1 2 3 or ٠ ١ ٢ ٣); both apply at once. Amounts can be typed in either kind of digit.
 
 ## Screenshots
 

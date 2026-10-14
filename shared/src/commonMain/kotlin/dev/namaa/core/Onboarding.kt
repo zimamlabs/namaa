@@ -27,27 +27,31 @@ object Onboarding {
     }
 }
 
-/** Short notes per version, taken from the changelog; shown once after an update. */
+/** Short notes per version, taken from the changelog; shown once after an update. Each note is English then Arabic. */
 object ReleaseNotes {
-    private val notes: Map<String, List<String>> = mapOf(
+    private val notes: Map<String, List<Pair<String, String>>> = mapOf(
+        "0.5.0" to listOf(
+            "An Arabic interface with a right-to-left layout. Choose the language and the digits in Settings." to "واجهة عربية بتخطيط من اليمين إلى اليسار. اختر اللغة والأرقام من الإعدادات.",
+        ),
         "0.4.0" to listOf(
-            "Zimma is now Namaa (نماء, growth), with a new icon. Your data is copied into the Zimam/Namaa folder; the old folders stay as a backup.",
+            "Zimma is now Namaa (نماء, growth), with a new icon. Your data is copied into the Zimam/Namaa folder; the old folders stay as a backup." to "صار «ذمّة» الآن «نماء» بأيقونة جديدة. تُنسخ بياناتك إلى مجلد Zimam/Namaa وتبقى المجلدات القديمة كنسخة احتياطية.",
         ),
         "0.3.0" to listOf(
-            "Budgets per category with progress bars and a warning when you go over.",
-            "Repeating transactions, search and filters, CSV export of a month or a year, and who owes whom.",
+            "Budgets per category with progress bars and a warning when you go over." to "ميزانيات لكل فئة بأشرطة تقدّم وتحذير عند التجاوز.",
+            "Repeating transactions, search and filters, CSV export of a month or a year, and who owes whom." to "معاملات متكررة، وبحث وعوامل تصفية، وتصدير CSV لشهر أو سنة، ومن يدين لمن.",
         ),
         "0.2.0" to listOf(
-            "A Home page with this month at a glance, recent transactions and shortcuts.",
-            "Your data now lives in one Zimam folder (Zimam/Zimma). Old folders are copied and checked, never deleted.",
-            "Pick a date from a calendar, a first-run tour, and these notes after each update.",
+            "A Home page with this month at a glance, recent transactions and shortcuts." to "صفحة رئيسية تعرض شهرك بنظرة واحدة، وأحدث المعاملات، واختصارات.",
+            "Your data now lives in one Zimam folder (Zimam/Zimma). Old folders are copied and checked, never deleted." to "صارت بياناتك في مجلد زمام واحد (Zimam/Zimma). تُنسخ المجلدات القديمة وتُفحص ولا تُحذف أبدًا.",
+            "Pick a date from a calendar, a first-run tour, and these notes after each update." to "اختيار التاريخ من تقويم، وجولة تعريفية عند أول تشغيل، وهذه الملاحظات بعد كل تحديث.",
         ),
-        "0.1.2" to listOf("A better opening screen."),
-        "0.1.1" to listOf("A new wallet icon."),
-        "0.1.0" to listOf("Accounts, income and spending, and monthly totals in plain files."),
+        "0.1.2" to listOf("A better opening screen." to "شاشة افتتاحية أفضل."),
+        "0.1.1" to listOf("A new wallet icon." to "أيقونة محفظة جديدة."),
+        "0.1.0" to listOf("Accounts, income and spending, and monthly totals in plain files." to "حسابات ودخل وإنفاق ومجاميع شهرية في ملفات بسيطة."),
     )
 
-    /** The notes for [version], or for the newest older version that has some. */
-    fun forVersion(version: String): List<String> =
-        notes[version] ?: notes.keys.filter { Onboarding.compare(it, version) <= 0 }.maxWithOrNull { a, b -> Onboarding.compare(a, b) }?.let { notes[it] }.orEmpty()
+    /** The notes for [version], or for the newest older version that has some, in [lang]. */
+    fun forVersion(version: String, lang: Lang = Lang.En): List<String> =
+        (notes[version] ?: notes.keys.filter { Onboarding.compare(it, version) <= 0 }.maxWithOrNull { a, b -> Onboarding.compare(a, b) }?.let { notes[it] }.orEmpty())
+            .map { if (lang == Lang.Ar) it.second else it.first }
 }

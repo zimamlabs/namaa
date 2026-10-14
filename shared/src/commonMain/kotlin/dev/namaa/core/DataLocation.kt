@@ -8,6 +8,11 @@ import okio.Path
  * folder. Older folders are copied into the shared one, verified, and left in place as a backup. If a copy does not
  * verify, the old location stays in use, [message] says why, and the next [refresh] tries again. Nothing is deleted here.
  */
+/** Why the last folder switch was held back; the screen words it in the current language. */
+data class FolderNote(val kind: Kind, val a: String, val b: String) {
+    enum class Kind { Unreachable, VerifyFailed }
+}
+
 class DataLocation(
     private val fs: FileSystem,
     val privateRoot: Path,
@@ -21,7 +26,7 @@ class DataLocation(
     val shared: Boolean get() = root == sharedFolder
 
     /** Set when the last switch could not be completed, so the screen can say why. */
-    var message: String? = null
+    var message: FolderNote? = null
         private set
 
     // Two old folders can share a name (Zimma, Zimam/Zimma), so the label includes the parent when it is Zimam.
@@ -47,13 +52,13 @@ class DataLocation(
         if (canUseShared()) {
             target = if (runCatching { fs.createDirectories(sharedFolder) }.isSuccess) sharedFolder else privateRoot
         } else if (fs.exists(sharedFolder) && fs.listOrNull(sharedFolder).orEmpty().any { !it.name.startsWith(".") }) {
-            message = "Namaa cannot reach ${sharedFolder} right now, so it shows the older copy kept inside the app. Allow access again to get your newer data back. Nothing was deleted."
+            message = FolderNote(FolderNote.Kind.Unreachable, sharedFolder.toString(), "")
         }
         if (target == sharedFolder) {
             for (old in oldFolders()) {
                 if (FolderMigration.upToDate(fs, old, sharedFolder, label(old))) continue
                 if (!FolderMigration.copyAndVerify(fs, old, sharedFolder, label(old)).ok) {
-                    message = "Namaa could not verify the copy of $old into $sharedFolder, so it keeps using the old folder and will try again later. Nothing was deleted."
+                    message = FolderNote(FolderNote.Kind.VerifyFailed, old.toString(), sharedFolder.toString())
                     target = old
                     break
                 }
