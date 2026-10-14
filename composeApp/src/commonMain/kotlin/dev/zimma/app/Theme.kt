@@ -22,9 +22,10 @@ private val Dark = darkColorScheme(
 )
 
 @Composable
-fun ZimmaTheme(content: @Composable () -> Unit) {
+fun ZimmaTheme(mode: String = "system", content: @Composable () -> Unit) {
+    val dark = when (mode) { "dark" -> true; "light" -> false; else -> isSystemInDarkTheme() }
     MaterialTheme(
-        colorScheme = if (isSystemInDarkTheme()) Dark else Light,
+        colorScheme = if (dark) Dark else Light,
         shapes = Shapes(small = RoundedCornerShape(10.dp), medium = RoundedCornerShape(16.dp), large = RoundedCornerShape(24.dp)),
         content = content,
     )

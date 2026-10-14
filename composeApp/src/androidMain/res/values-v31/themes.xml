@@ -1,10 +1,10 @@
 <resources>
     <style name="Theme.Zimma" parent="android:Theme.Material.Light.NoActionBar">
-        <item name="android:windowBackground">#121214</item>
+        <item name="android:windowBackground">#120F0A</item>
         <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:navigationBarColor">@android:color/transparent</item>
         <item name="android:windowLayoutInDisplayCutoutMode">shortEdges</item>
-        <item name="android:windowSplashScreenBackground">#121214</item>
+        <item name="android:windowSplashScreenBackground">#120F0A</item>
         <item name="android:windowSplashScreenAnimatedIcon">@drawable/ic_launcher_foreground</item>
     </style>
 </resources>

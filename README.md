@@ -1,4 +1,4 @@
-<p align="center"><img src="docs/icon.svg" width="120" alt="Zimma"></p>
+<p align="center"><img src="docs/icon.png" width="120" alt="Zimma"></p>
 
 <h1 align="center">Zimma</h1>
 
@@ -8,11 +8,17 @@ Zimma (ذمّة, what you owe and are owed) keeps your accounts and your income 
 
 ## What is in it
 
-- **This month** at a glance: income, spent and what is left.
+- **Home**: this month's balance, income, spent and left in one card; a donut chart of where the money went; income against spending for the last six months; a card for each account; recent transactions; quick actions to add an expense, an income or a transfer.
 - **Accounts** with their balances. A plain Cash account is there from the first launch; add more or rename them.
-- **Transactions**, newest first: amount, income or spending, account, category (chips or your own words), note and date. Tap one to edit or delete it.
-- **Spending by category** for the month.
-- **Plain files**: `accounts.json` and one `<year>.csv` per year, amounts in minor units (cents). Open them in any editor or spreadsheet.
+- **Transfers** between your own accounts: two legs that always sum to zero and never count as income or spending.
+- **Transactions**, newest first: amount, income or spending, account, category (chips or your own words), note and a date picked from a calendar. Tap one to edit or delete it.
+- **Report**: any month, with totals and spending by category.
+- **A first-run tour** (reopen it from Settings) and a one-time *What's new* after each update.
+- **Plain files** in one **Zimam folder**: `accounts.json` and one `<year>.csv` per year, amounts in minor units (cents). Open them in any editor or spreadsheet.
+
+## Your data
+
+On the phone Zimma keeps its files in a visible `Zimam/Zimma` folder when you allow *All files access* (Settings has the button), so they survive reinstalling the app. Without it they stay inside the app. Earlier folders (the one inside the app, or `~/Zimma` on the desktop) are copied into the new folder and every file is checked by size and SHA-256. **Nothing is lost:** the old folder is never deleted automatically, a file already in the new folder is never overwritten (both are kept), and if anything does not verify Zimma keeps using the old folder and tries again later. Settings can remove the old folder, but only after checking every file again and asking you first.
 
 ## Download
 
@@ -46,7 +52,7 @@ You need JDK 17 or newer and, for Android, the Android SDK (platform 36).
 
 ```
 ./gradlew :shared:desktopTest            # the money tests
-./gradlew :composeApp:run                # run it on the desktop (data in ~/Zimma)
+./gradlew :composeApp:run                # run it on the desktop (data in ~/Zimam/Zimma)
 ./gradlew :composeApp:assembleDebug      # Android debug APKs
 ```
 
@@ -54,7 +60,7 @@ You need JDK 17 or newer and, for Android, the Android SDK (platform 36).
 
 ## Roadmap
 
-A visible `/Zimma` folder on the phone, budgets, savings and plans, who owes whom, and a Linux edition.
+Budgets with progress and warnings, recurring transactions, search and filters, CSV export of a month or year, who owes whom, and a Linux edition.
 
 ## Licence
 
