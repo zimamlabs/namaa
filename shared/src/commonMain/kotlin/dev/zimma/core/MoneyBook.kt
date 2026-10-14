@@ -15,6 +15,10 @@ import okio.Path
  * ```
  * accounts.json    the accounts
  * <year>.csv       that year's transactions, amounts in minor units
+ * budgets.json     monthly limits per category
+ * recurring.json   repeating transactions
+ * debts.json       money lent and borrowed, with payments
+ * exports/         CSV exports of a month or a year
  * ```
  */
 class MoneyBook(
@@ -82,5 +86,44 @@ class MoneyBook(
         val rows = listOf(listOf("id", "date", "amount_minor", "account", "category", "note", "transfer")) +
             list.sortedBy { it.date }.map { listOf(it.id, it.date.toString(), it.amountMinor.toString(), it.accountId, it.category, it.note, it.transferId) }
         write(txnPath(year), Csv.format(rows))
+    }
+
+    private fun <T> readList(name: String, ser: kotlinx.serialization.KSerializer<T>): List<T> =
+        read(root / name)?.let { runCatching { json.decodeFromString(ListSerializer(ser), it) }.getOrNull() }.orEmpty()
+
+    private fun <T> writeList(name: String, ser: kotlinx.serialization.KSerializer<T>, list: List<T>) = write(root / name, json.encodeToString(ListSerializer(ser), list))
+
+    fun budgets(): List<Budget> = readList("budgets.json", Budget.serializer())
+    fun saveBudgets(list: List<Budget>) = writeList("budgets.json", Budget.serializer(), list)
+
+    fun recurring(): List<Recurring> = readList("recurring.json", Recurring.serializer())
+    fun saveRecurring(list: List<Recurring>) = writeList("recurring.json", Recurring.serializer(), list)
+
+    fun debts(): List<Debt> = readList("debts.json", Debt.serializer())
+    fun saveDebts(list: List<Debt>) = writeList("debts.json", Debt.serializer(), list)
+
+    /** Turns every repeating transaction that has come due (up to [today]) into a real one; safe to call again, it never doubles. Returns how many were added. */
+    fun applyRecurring(today: LocalDate = today()): Int {
+        var added = 0
+        val rules = recurring()
+        val updated = rules.map { rule ->
+            val due = dueDates(rule, today)
+            due.forEach { d ->
+                if (allTransactions().none { it.id == recurringTxnId(rule, d) }) {
+                    saveTransaction(Txn(recurringTxnId(rule, d), d, rule.amountMinor, rule.accountId, rule.category, rule.note)); added++
+                }
+            }
+            if (due.isEmpty()) rule else rule.copy(lastGenerated = due.last())
+        }
+        if (updated != rules) saveRecurring(updated)
+        return added
+    }
+
+    /** Writes the CSV for the given transactions into `exports/` and returns its path. */
+    fun export(fileName: String, txns: List<Txn>): Path {
+        val path = root / "exports" / fileName
+        fs.createDirectories(path.parent!!)
+        write(path, exportCsv(txns, accounts()))
+        return path
     }
 }
