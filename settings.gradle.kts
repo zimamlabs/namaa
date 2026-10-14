@@ -12,5 +12,5 @@ dependencyResolutionManagement {
         mavenCentral()
     }
 }
-rootProject.name = "zimma"
+rootProject.name = "namaa"
 include(":shared", ":composeApp")

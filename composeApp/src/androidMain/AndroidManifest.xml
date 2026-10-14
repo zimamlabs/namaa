@@ -7,11 +7,11 @@
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:roundIcon="@mipmap/ic_launcher"
-        android:label="Zimma"
+        android:label="Namaa"
         android:supportsRtl="true"
-        android:theme="@style/Theme.Zimma">
+        android:theme="@style/Theme.Namaa">
         <activity
-            android:name="dev.zimma.app.MainActivity"
+            android:name="dev.namaa.app.MainActivity"
             android:exported="true"
             android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|smallestScreenSize|uiMode">
             <intent-filter>

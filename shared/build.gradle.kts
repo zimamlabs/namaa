@@ -22,7 +22,7 @@ kotlin {
 }
 
 android {
-    namespace = "dev.zimma.core"
+    namespace = "dev.namaa.core"
     compileSdk = 36
     defaultConfig { minSdk = 26 }
     compileOptions {
