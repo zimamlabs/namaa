@@ -5,6 +5,9 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import dev.zimma.core.Account
+import dev.zimma.core.Budget
+import dev.zimma.core.Debt
+import dev.zimma.core.Recurring
 import dev.zimma.core.DataLocation
 import dev.zimma.core.MoneyBook
 import dev.zimma.core.Prefs
@@ -22,6 +25,12 @@ class ZimmaStore(book: MoneyBook, private val prefsFile: PrefsFile, val location
     var txns by mutableStateOf(emptyList<Txn>())
         private set
     var today by mutableStateOf(book.today())
+        private set
+    var budgets by mutableStateOf(emptyList<Budget>())
+        private set
+    var recurring by mutableStateOf(emptyList<Recurring>())
+        private set
+    var debts by mutableStateOf(emptyList<Debt>())
         private set
     var prefs by mutableStateOf(prefsFile.load())
         private set
@@ -42,10 +51,24 @@ class ZimmaStore(book: MoneyBook, private val prefsFile: PrefsFile, val location
     val hasData: Boolean get() = txns.isNotEmpty() || accounts.size > 1
 
     fun reload() {
+        today = book.today()
+        // Repeating transactions that came due since the last open are added here, once each.
+        book.applyRecurring(today)
         accounts = book.accounts()
         txns = book.allTransactions()
-        today = book.today()
+        budgets = book.budgets()
+        recurring = book.recurring()
+        debts = book.debts()
     }
+
+    fun saveBudgets(list: List<Budget>) { book.saveBudgets(list); budgets = list }
+
+    fun saveRecurring(list: List<Recurring>) { book.saveRecurring(list); reload() }
+
+    fun saveDebts(list: List<Debt>) { book.saveDebts(list); debts = list }
+
+    /** Writes the CSV into the Zimam folder's `exports/` and returns where it went. */
+    fun export(fileName: String, list: List<Txn>): String = book.export(fileName, list).toString()
 
     fun useBook(newBook: MoneyBook) { book = newBook; ensureCash(); reload(); folderTick++ }
 

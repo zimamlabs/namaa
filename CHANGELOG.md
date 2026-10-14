@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.3.0
+
+- **Budgets** per category with a progress bar, a warning at 80 percent and an over-budget alert; the Home card shows the ones that need attention.
+- **Repeating transactions**, weekly or monthly (a rule on the 31st falls on the last day of shorter months). They are added once each when they come due, and never doubled.
+- **Search and filters** on the Money page: text, category, account and a date range.
+- **Export** a month or a whole year as CSV into `exports/` in the Zimam folder.
+- **Who owes whom**: money you lent or borrowed, settled with partial payments, with totals and a balance per person.
+- **A new look** that follows the icon: warm dark and ivory surfaces, the Zimam orange accent, a soft glow behind the hero card, large rounded cards, and a redesigned About page.
+
 ## 0.2.0
 
 - **A professional Home.** The month's balance with income, spent and left; a donut chart of spending by category; income against spending for the last six months; a card per account; recent transactions; quick actions for an expense, an income and a transfer. Bottom navigation for Home, Money, Accounts and Report.

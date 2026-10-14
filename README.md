@@ -1,8 +1,16 @@
-<p align="center"><img src="docs/icon.png" width="120" alt="Zimma"></p>
+<p align="center"><img src="docs/banner.png" alt="Zimma" width="100%"></p>
+
+<p align="center"><img src="docs/icon.png" width="96" alt="Zimma icon"></p>
 
 <h1 align="center">Zimma</h1>
 
 <p align="center">Private money tracking in plain files, by <a href="https://github.com/zimamlabs">Zimam</a>.</p>
+
+<p align="center">
+  <a href="https://github.com/zimamlabs/zimma/releases/latest"><img alt="Release" src="https://img.shields.io/github/v/release/zimamlabs/zimma?color=FF5A1F&labelColor=1A1613"></a>
+  <a href="https://github.com/zimamlabs/zimma/releases"><img alt="Downloads" src="https://img.shields.io/github/downloads/zimamlabs/zimma/total?color=FF5A1F&labelColor=1A1613"></a>
+  <a href="LICENSE"><img alt="Licence: MIT" src="https://img.shields.io/badge/licence-MIT-FF5A1F?labelColor=1A1613"></a>
+</p>
 
 Zimma (ذمّة, what you owe and are owed) keeps your accounts and your income and spending in a folder of plain files you own. It works offline, has no account and sends nothing anywhere.
 
@@ -15,6 +23,10 @@ Zimma (ذمّة, what you owe and are owed) keeps your accounts and your income 
 - **Report**: any month, with totals and spending by category.
 - **A first-run tour** (reopen it from Settings) and a one-time *What's new* after each update.
 - **Plain files** in one **Zimam folder**: `accounts.json` and one `<year>.csv` per year, amounts in minor units (cents). Open them in any editor or spreadsheet.
+
+## Screenshots
+
+Screenshots will be added here once the app has been run on a device.
 
 ## Your data
 
