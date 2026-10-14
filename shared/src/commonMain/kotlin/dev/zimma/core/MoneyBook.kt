@@ -49,7 +49,7 @@ class MoneyBook(
     private fun txnYears(): List<Int> = fs.listOrNull(root).orEmpty().filter { it.name.endsWith(".csv") }.mapNotNull { it.name.removeSuffix(".csv").toIntOrNull() }
 
     fun transactions(year: Int): List<Txn> = Csv.parse(read(txnPath(year)) ?: "").drop(1).mapNotNull { r ->
-        runCatching { Txn(r[0], LocalDate.parse(r[1]), r[2].toLong(), r[3], r.getOrElse(4) { "" }, r.getOrElse(5) { "" }) }.getOrNull()
+        runCatching { Txn(r[0], LocalDate.parse(r[1]), r[2].toLong(), r[3], r.getOrElse(4) { "" }, r.getOrElse(5) { "" }, r.getOrElse(6) { "" }) }.getOrNull()
     }
 
     fun allTransactions(): List<Txn> = txnYears().sorted().flatMap { transactions(it) }.sortedByDescending { it.date }
@@ -63,13 +63,24 @@ class MoneyBook(
         return saved
     }
 
+    /** Moves [amountMinor] (positive) from one account to another as two legs that always sum to zero; returns the transfer id. */
+    fun saveTransfer(date: LocalDate, fromAccount: String, toAccount: String, amountMinor: Long, note: String = ""): String {
+        require(amountMinor > 0 && fromAccount != toAccount) { "a transfer needs a positive amount and two different accounts" }
+        val tid = newId()
+        saveTransaction(Txn("", date, -amountMinor, fromAccount, "Transfer", note, tid))
+        saveTransaction(Txn("", date, amountMinor, toAccount, "Transfer", note, tid))
+        return tid
+    }
+
+    /** Deletes the transaction; for a transfer both legs go together so balances never drift. */
     fun deleteTransaction(id: String) {
-        txnYears().forEach { y -> transactions(y).let { list -> if (list.any { it.id == id }) writeYear(y, list.filter { it.id != id }) } }
+        val tid = allTransactions().firstOrNull { it.id == id }?.transferId.orEmpty()
+        txnYears().forEach { y -> transactions(y).let { list -> if (list.any { it.id == id || (tid.isNotEmpty() && it.transferId == tid) }) writeYear(y, list.filter { it.id != id && (tid.isEmpty() || it.transferId != tid) }) } }
     }
 
     private fun writeYear(year: Int, list: List<Txn>) {
-        val rows = listOf(listOf("id", "date", "amount_minor", "account", "category", "note")) +
-            list.sortedBy { it.date }.map { listOf(it.id, it.date.toString(), it.amountMinor.toString(), it.accountId, it.category, it.note) }
+        val rows = listOf(listOf("id", "date", "amount_minor", "account", "category", "note", "transfer")) +
+            list.sortedBy { it.date }.map { listOf(it.id, it.date.toString(), it.amountMinor.toString(), it.accountId, it.category, it.note, it.transferId) }
         write(txnPath(year), Csv.format(rows))
     }
 }

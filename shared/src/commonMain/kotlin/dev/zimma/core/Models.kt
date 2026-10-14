@@ -14,4 +14,6 @@ data class Txn(
     val accountId: String,
     val category: String = "",
     val note: String = "",
+    /** Both legs of a transfer between accounts share one id; empty for ordinary income and spending. */
+    val transferId: String = "",
 )
