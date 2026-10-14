@@ -17,6 +17,18 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ChevronLeft
 import androidx.compose.material.icons.rounded.ChevronRight
+import androidx.compose.material.icons.rounded.FilterList
+import androidx.compose.material.icons.rounded.Search
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.TextButton
+import dev.zimma.core.TxnFilter
+import dev.zimma.core.filterTxns
+import dev.zimma.core.monthFileName
+import dev.zimma.core.yearFileName
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -40,9 +52,34 @@ import dev.zimma.core.shiftMonth
 
 @Composable
 fun TransactionsScreen(store: ZimmaStore, padding: PaddingValues, onEdit: (Txn) -> Unit) {
+    var filter by remember { mutableStateOf(TxnFilter()) }
+    var open by remember { mutableStateOf(false) }
+    val shown = remember(store.txns, filter) { filterTxns(store.txns, filter) }
+    val categories = remember(store.txns) { store.txns.map { it.category.ifEmpty { "Other" } }.distinct().sorted() }
     LazyColumn(Modifier.fillMaxSize().padding(padding), contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 96.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+        item {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedTextField(filter.text, { filter = filter.copy(text = it) }, Modifier.weight(1f), singleLine = true, placeholder = { Text("Search category, note or amount") }, leadingIcon = { Icon(Icons.Rounded.Search, null) })
+                    FilterChip(open || filter.category.isNotBlank() || filter.accountId.isNotBlank() || filter.from != null || filter.to != null, { open = !open }, { Text("Filters") }, leadingIcon = { Icon(Icons.Rounded.FilterList, null, Modifier.size(18.dp)) })
+                }
+                if (open) {
+                    LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) { items(categories) { c -> FilterChip(filter.category == c, { filter = filter.copy(category = if (filter.category == c) "" else c) }, { Text(c) }) } }
+                    if (store.accounts.size > 1) LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) { items(store.accounts, key = { it.id }) { a -> FilterChip(filter.accountId == a.id, { filter = filter.copy(accountId = if (filter.accountId == a.id) "" else a.id) }, { Text(a.name) }) } }
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Box(Modifier.weight(1f)) { DateField(filter.from ?: store.today, "From") { filter = filter.copy(from = it) } }
+                        Box(Modifier.weight(1f)) { DateField(filter.to ?: store.today, "To") { filter = filter.copy(to = it) } }
+                    }
+                }
+                if (filter.active) Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
+                    Text("${shown.size} of ${store.txns.size} shown", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    TextButton(onClick = { filter = TxnFilter() }) { Text("Clear filters") }
+                }
+            }
+        }
         if (store.txns.isEmpty()) item { EmptyHint("No transactions yet", "Tap + to add one. They are saved per year in <year>.csv.") }
-        items(store.txns.take(500), key = { it.id }) { t -> TxnRow(t, store.accounts) { onEdit(t) } }
+        else if (shown.isEmpty()) item { EmptyHint("Nothing matches", "Try fewer filters.") }
+        items(shown.take(500), key = { it.id }) { t -> TxnRow(t, store.accounts) { onEdit(t) } }
     }
 }
 
@@ -84,6 +121,17 @@ fun ReportScreen(store: ZimmaStore, padding: PaddingValues) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) { Text("Spent", style = MaterialTheme.typography.labelMedium); Text(formatMoney(-s.expenseMinor), style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.error) }
                     Column(horizontalAlignment = Alignment.End) { Text("Left", style = MaterialTheme.typography.labelMedium); Text(formatMoney(s.netMinor), style = MaterialTheme.typography.titleLarge) }
                 }
+            }
+        }
+        item {
+            var saved by remember { mutableStateOf<String?>(null) }
+            Panel {
+                Text("Export", style = MaterialTheme.typography.titleSmall)
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedButton(onClick = { saved = store.export(monthFileName(year, month), store.txns.filter { it.date.year == year && it.date.monthNumber == month }) }) { Text("${monthName(month)} $year") }
+                    OutlinedButton(onClick = { saved = store.export(yearFileName(year), store.txns.filter { it.date.year == year }) }) { Text("All of $year") }
+                }
+                saved?.let { Text("Saved to $it", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
             }
         }
         if (s.byCategory.isEmpty()) item { EmptyHint("Nothing spent this month", "Spending by category shows up here.") } else item {

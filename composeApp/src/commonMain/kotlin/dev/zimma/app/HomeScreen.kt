@@ -1,5 +1,6 @@
 package dev.zimma.app
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -24,6 +25,7 @@ import androidx.compose.material.icons.rounded.AccountBalanceWallet
 import androidx.compose.material.icons.rounded.BarChart
 import androidx.compose.material.icons.rounded.History
 import androidx.compose.material.icons.rounded.PieChart
+import androidx.compose.material.icons.rounded.Savings
 import androidx.compose.material.icons.rounded.Remove
 import androidx.compose.material.icons.rounded.SwapHoriz
 import androidx.compose.material.icons.rounded.AutoAwesome
@@ -44,7 +46,9 @@ import androidx.compose.ui.unit.dp
 import dev.zimma.core.Account
 import dev.zimma.core.ReleaseNotes
 import dev.zimma.core.Txn
+import dev.zimma.core.BudgetState
 import dev.zimma.core.balance
+import dev.zimma.core.budgetStatuses
 import dev.zimma.core.formatMoney
 import dev.zimma.core.monthSummary
 import dev.zimma.core.monthlyTotals
@@ -52,8 +56,10 @@ import dev.zimma.core.monthlyTotals
 @Composable
 fun SectionTitle(icon: ImageVector, text: String, trailing: (@Composable () -> Unit)? = null) {
     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        Icon(icon, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
-        Text(text, Modifier.weight(1f), style = MaterialTheme.typography.titleSmall)
+        Box(Modifier.size(30.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primary.copy(alpha = 0.16f)), contentAlignment = Alignment.Center) {
+            Icon(icon, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(18.dp))
+        }
+        Text(text, Modifier.weight(1f), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
         trailing?.invoke()
     }
 }
@@ -87,15 +93,15 @@ fun HomeScreen(
     val currency = store.accounts.map { it.currency }.distinct().singleOrNull() ?: ""
     LazyColumn(Modifier.fillMaxSize().padding(padding), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
         item {
-            Card(Modifier.fillMaxWidth(), shape = RoundedCornerShape(24.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer), elevation = CardDefaults.cardElevation(3.dp)) {
-                Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Text("${monthName(today.monthNumber)} ${today.year}  ·  ${prettyDate(today)}", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onPrimaryContainer)
-                    Text("Balance", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onPrimaryContainer)
-                    Text((formatMoney(total) + " " + currency).trim(), style = MaterialTheme.typography.displaySmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onPrimaryContainer)
+            Card(Modifier.fillMaxWidth(), shape = RoundedCornerShape(28.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer), border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant), elevation = CardDefaults.cardElevation(0.dp)) {
+                Column(Modifier.heroGlow().padding(22.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Text("${monthName(today.monthNumber)} ${today.year}  ·  ${prettyDate(today)}", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text("Balance", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text((formatMoney(total) + " " + currency).trim(), style = MaterialTheme.typography.displaySmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface)
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                        Stat("Income", formatMoney(month.incomeMinor), MaterialTheme.colorScheme.onPrimaryContainer)
-                        Stat("Spent", formatMoney(-month.expenseMinor), MaterialTheme.colorScheme.onPrimaryContainer)
-                        Stat("Left", formatMoney(month.netMinor), MaterialTheme.colorScheme.onPrimaryContainer)
+                        Stat("Income", formatMoney(month.incomeMinor), MaterialTheme.colorScheme.secondary)
+                        Stat("Spent", formatMoney(-month.expenseMinor), MaterialTheme.colorScheme.primary)
+                        Stat("Left", formatMoney(month.netMinor), MaterialTheme.colorScheme.onSurface)
                     }
                 }
             }
@@ -105,6 +111,14 @@ fun HomeScreen(
                 QuickAction(Icons.Rounded.Remove, "Expense", Modifier.weight(1f), onExpense)
                 QuickAction(Icons.Rounded.Add, "Income", Modifier.weight(1f), onIncome)
                 QuickAction(Icons.Rounded.SwapHoriz, "Transfer", Modifier.weight(1f), onTransfer)
+            }
+        }
+        val budgetStatus = budgetStatuses(store.budgets, store.txns, today.year, today.monthNumber)
+        if (budgetStatus.isNotEmpty()) item {
+            Panel {
+                val warn = budgetStatus.count { it.state != BudgetState.Ok }
+                SectionTitle(Icons.Rounded.Savings, if (warn > 0) "Budgets: $warn need attention" else "Budgets") { TextButton(onClick = { onOpen(Tab.Plan) }) { Text("Plan") } }
+                budgetStatus.take(3).forEach { BudgetBar(it) }
             }
         }
         if (month.byCategory.isNotEmpty()) item {
@@ -124,7 +138,7 @@ fun HomeScreen(
                 SectionTitle(Icons.Rounded.AccountBalanceWallet, "Accounts") { TextButton(onClick = { onOpen(Tab.Accounts) }) { Text("All") } }
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     items(store.accounts, key = { it.id }) { a ->
-                        Card(Modifier.width(168.dp), shape = RoundedCornerShape(20.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer), elevation = CardDefaults.cardElevation(1.dp)) {
+                        Card(Modifier.width(168.dp), shape = RoundedCornerShape(24.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer), border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant), elevation = CardDefaults.cardElevation(0.dp)) {
                             Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                                 Text(a.name, style = MaterialTheme.typography.labelLarge, maxLines = 1)
                                 Text(formatMoney(balance(a, store.txns)), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
@@ -163,7 +177,7 @@ private fun Stat(label: String, value: String, colour: androidx.compose.ui.graph
 
 @Composable
 private fun QuickAction(icon: ImageVector, text: String, modifier: Modifier, onClick: () -> Unit) {
-    FilledTonalButton(onClick, modifier, shape = RoundedCornerShape(16.dp), contentPadding = PaddingValues(horizontal = 8.dp, vertical = 12.dp)) {
+    FilledTonalButton(onClick, modifier, shape = RoundedCornerShape(18.dp), contentPadding = PaddingValues(horizontal = 8.dp, vertical = 14.dp)) {
         Icon(icon, null, Modifier.size(18.dp)); Spacer(Modifier.width(6.dp)); Text(text, maxLines = 1)
     }
 }

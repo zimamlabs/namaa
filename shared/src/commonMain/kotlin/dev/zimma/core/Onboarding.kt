@@ -30,6 +30,10 @@ object Onboarding {
 /** Short notes per version, taken from the changelog; shown once after an update. */
 object ReleaseNotes {
     private val notes: Map<String, List<String>> = mapOf(
+        "0.3.0" to listOf(
+            "Budgets per category with progress bars and a warning when you go over.",
+            "Repeating transactions, search and filters, CSV export of a month or a year, and who owes whom.",
+        ),
         "0.2.0" to listOf(
             "A Home page with this month at a glance, recent transactions and shortcuts.",
             "Your data now lives in one Zimam folder (Zimam/Zimma). Old folders are copied and checked, never deleted.",
