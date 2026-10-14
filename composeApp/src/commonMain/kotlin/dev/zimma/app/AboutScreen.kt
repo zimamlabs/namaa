@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -33,6 +34,7 @@ fun AboutScreen(onBack: () -> Unit) {
         },
     ) { padding ->
         Column(Modifier.fillMaxSize().padding(padding).padding(24.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            BrandMark(Modifier.size(96.dp))
             Text("Zimma", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.SemiBold)
             Text("ذمّة", style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.primary)
             Text("by Zimam", style = MaterialTheme.typography.titleMedium)

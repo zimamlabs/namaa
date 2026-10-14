@@ -30,7 +30,7 @@ import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-private val Ink = Color(0xFF121214)
+private val Ink = Color(0xFF120F0A)
 private val Cream = Color(0xFFF5F1E8)
 private val Orange = Color(0xFFFF5A1F)
 
@@ -48,11 +48,7 @@ fun Splash(onDone: () -> Unit) {
         onDone()
     }
     Column(Modifier.fillMaxSize().background(Ink), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
-        Canvas(Modifier.size(150.dp).graphicsLayer { val k = 0.88f + 0.12f * moon.value; scaleX = k; scaleY = k }) {
-            val u = size.width / 512f
-            drawRoundRect(Cream.copy(alpha = moon.value), Offset(110f * u, 170f * u), Size(292f * u, 200f * u), CornerRadius(40f * u), style = Stroke(38f * u))
-            zimamDot(Offset(350f * u, 270f * u), 70f * u * pop.value, Orange)
-        }
+        BrandMark(Modifier.size(150.dp).graphicsLayer { val k = 0.88f + 0.12f * moon.value; scaleX = k; scaleY = k; alpha = moon.value })
         Spacer(Modifier.height(32.dp))
         Text("Zimma", Modifier.alpha(name.value).offset(y = ((1f - name.value) * 14f).dp), color = Cream, fontSize = 30.sp, fontWeight = FontWeight.SemiBold)
         Spacer(Modifier.height(4.dp))
