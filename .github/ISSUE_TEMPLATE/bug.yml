@@ -1,0 +1,23 @@
+name: Bug report
+description: Something in Namaa does not work
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What you did, what you expected, and what you saw.
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Namaa version and Android version
+      placeholder: "for example 0.3.1 on Android 14"
+    validations:
+      required: true
+  - type: textarea
+    id: more
+    attributes:
+      label: Anything else
+      description: Screenshots, steps to repeat it, or a file that triggers it. Do not paste private data.
