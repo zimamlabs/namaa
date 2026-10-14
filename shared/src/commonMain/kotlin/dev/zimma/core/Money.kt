@@ -33,3 +33,9 @@ fun parseMoney(text: String): Long? {
     val minor = (whole.ifEmpty { "0" }.toLongOrNull() ?: return null) * 100 + (frac.padEnd(2, '0').take(2).toLongOrNull() ?: return null)
     return if (neg) -minor else minor
 }
+
+/** The month [delta] months from [year]/[month]: `(2026, 1)` and -1 is `(2025, 12)`. */
+fun shiftMonth(year: Int, month: Int, delta: Int): Pair<Int, Int> {
+    val index = year * 12 + (month - 1) + delta
+    return Pair(index.floorDiv(12), index.mod(12) + 1)
+}
