@@ -24,16 +24,79 @@ fun formatMoney(minor: Long): String {
     return (if (minor < 0) "-" else "") + (abs / 100).toString() + "." + (abs % 100).toString().padStart(2, '0')
 }
 
-/** Reads "12.5", "12,50", "-3" or the same in Arabic-Indic digits ("١٢٫٥") as minor units; null when it is not a number. */
-fun parseMoney(text: String): Long? {
-    val t = text.trim().map { if (it in '٠'..'٩') '0' + (it - '٠') else if (it in '۰'..'۹') '0' + (it - '۰') else it }.joinToString("").replace('٫', '.').replace('٬', ',').replace(',', '.')
-    val neg = t.startsWith("-")
-    val body = t.removePrefix("-").removePrefix("+")
-    if (body.isEmpty() || body.count { it == '.' } > 1 || body.any { !it.isDigit() && it != '.' }) return null
-    val (whole, frac) = body.split('.').let { it[0] to it.getOrElse(1) { "" } }
-    val minor = (whole.ifEmpty { "0" }.toLongOrNull() ?: return null) * 100 + (frac.padEnd(2, '0').take(2).toLongOrNull() ?: return null)
-    return if (neg) -minor else minor
+/** Why an amount typed by the user was not accepted. */
+enum class MoneyProblem { Empty, NotANumber, Ambiguous, TooManyDecimals, TooLarge }
+
+sealed interface MoneyParse {
+    data class Ok(val minor: Long) : MoneyParse
+    data class Bad(val problem: MoneyProblem) : MoneyParse
 }
+
+/**
+ * Reads a typed amount as minor units, or says why it cannot. Digits may be Latin, Arabic-Indic or Persian; the decimal mark
+ * is "." or "," (or the Arabic ٫). Thousands grouping is accepted only when it cannot be a decimal: "1,234.50", "1.234,50"
+ * and "1,234,567" are fine, "1,234" is [MoneyProblem.Ambiguous] (1.234 or 1234?) and so is "12.999". More than two decimals
+ * are never cut off.
+ */
+fun parseMoneyResult(text: String): MoneyParse {
+    val t = text.trim().map {
+        when (it) {
+            in '٠'..'٩' -> '0' + (it - '٠')
+            in '۰'..'۹' -> '0' + (it - '۰')
+            '٫' -> '.'
+            '٬', '،' -> ','
+            '\u2212' -> '-'
+            else -> it
+        }
+    }.joinToString("")
+    if (t.isEmpty()) return bad(MoneyProblem.Empty)
+    val negative = t.startsWith("-")
+    val body = if (t[0] == '-' || t[0] == '+') t.substring(1) else t
+    if (body.none { it.isDigit() } || body.any { it !in '0'..'9' && it != '.' && it != ',' }) return bad(MoneyProblem.NotANumber)
+
+    val last = body.indexOfLast { it == '.' || it == ',' }
+    var whole = body
+    var frac = ""
+    if (last >= 0) {
+        val before = body.substring(0, last)
+        val after = body.substring(last + 1)
+        val earlier = before.filter { it == '.' || it == ',' }.toSet()
+        val groupChar = earlier.singleOrNull()
+        when {
+            earlier.isEmpty() -> {
+                if (after.length == 3) return bad(MoneyProblem.Ambiguous)
+                if (after.length > 3) return bad(MoneyProblem.TooManyDecimals)
+                whole = before; frac = after
+            }
+            earlier.size > 1 -> return bad(MoneyProblem.Ambiguous)
+            groupChar != body[last] -> {
+                if (!isGrouped(before, groupChar!!)) return bad(MoneyProblem.Ambiguous)
+                if (after.length > 2) return bad(MoneyProblem.TooManyDecimals)
+                whole = before.replace(groupChar.toString(), ""); frac = after
+            }
+            else -> { // the same mark everywhere: it can only be grouping
+                if (!isGrouped(body, groupChar!!)) return bad(MoneyProblem.Ambiguous)
+                whole = body.replace(groupChar.toString(), "")
+            }
+        }
+    }
+    val cents = frac.padEnd(2, '0').toLong()
+    val units = (whole.ifEmpty { "0" }).toLongOrNull() ?: return bad(MoneyProblem.TooLarge)
+    if (units > (Long.MAX_VALUE - cents) / 100) return bad(MoneyProblem.TooLarge)
+    val minor = units * 100 + cents
+    return MoneyParse.Ok(if (negative) -minor else minor)
+}
+
+private fun bad(p: MoneyProblem) = MoneyParse.Bad(p)
+
+/** "1,234,567": a first group of one to three digits, then groups of exactly three. */
+private fun isGrouped(text: String, mark: Char): Boolean {
+    val groups = text.split(mark)
+    return groups.first().length in 1..3 && groups.drop(1).all { it.length == 3 }
+}
+
+/** The amount in minor units, or null when [parseMoneyResult] rejects it. */
+fun parseMoney(text: String): Long? = (parseMoneyResult(text) as? MoneyParse.Ok)?.minor
 
 /** The month [delta] months from [year]/[month]: `(2026, 1)` and -1 is `(2025, 12)`. */
 fun shiftMonth(year: Int, month: Int, delta: Int): Pair<Int, Int> {
