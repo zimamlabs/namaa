@@ -24,6 +24,9 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.unit.dp
 import dev.namaa.core.MonthTotal
 import dev.namaa.core.formatMoney
+import dev.namaa.core.percentShares
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 
 /** A palette that reads in light and dark, starting from the Zimam orange. */
 val chartColors = listOf(Color(0xFFFF5A1F), Color(0xFF2E9E8F), Color(0xFFE8A317), Color(0xFF6C7AE0), Color(0xFFD1507A), Color(0xFF8A9A5B), Color(0xFF9B9B9B))
@@ -34,7 +37,9 @@ fun DonutChart(slices: List<Pair<String, Long>>, centreTop: String, centreBottom
     val shown = slices.take(chartColors.size - 1) + if (slices.size > chartColors.size - 1) listOf("Other" to slices.drop(chartColors.size - 1).sumOf { it.second }) else emptyList()
     val total = shown.sumOf { it.second }.coerceAtLeast(1)
     val track = MaterialTheme.colorScheme.surfaceContainerHigh
-    Row(modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+    val shares = percentShares(shown.map { it.second })
+    val description = Str.ChartSpendingDesc.t(centreBottom, shown.mapIndexed { i, (name, _) -> categoryShown(name) + " " + num("${shares[i]}%") }.joinToString(", "))
+    Row(modifier.fillMaxWidth().semantics(mergeDescendants = true) { contentDescription = description }, verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
         Box(Modifier.size(132.dp), contentAlignment = Alignment.Center) {
             Canvas(Modifier.size(132.dp)) {
                 val stroke = size.width * 0.16f
@@ -60,7 +65,7 @@ fun DonutChart(slices: List<Pair<String, Long>>, centreTop: String, centreBottom
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Box(Modifier.size(10.dp).also { }) { Canvas(Modifier.size(10.dp)) { drawCircle(chartColors[i % chartColors.size]) } }
                     Text(categoryShown(name), Modifier.weight(1f), style = MaterialTheme.typography.bodySmall, maxLines = 1)
-                    Text(num("${(100L * v / total)}%"), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(num("${shares[i]}%"), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
         }
@@ -74,7 +79,8 @@ fun MonthBars(months: List<MonthTotal>, modifier: Modifier = Modifier) {
     val income = MaterialTheme.colorScheme.secondary
     val spent = MaterialTheme.colorScheme.primary
     val grid = MaterialTheme.colorScheme.outlineVariant
-    Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+    val description = Str.ChartMonthsDesc.t(months.map { Str.ChartMonthDesc.t(monthName(it.month), money(it.incomeMinor), money(it.spentMinor)) }.joinToString("; "))
+    Column(modifier.fillMaxWidth().semantics(mergeDescendants = true) { contentDescription = description }, verticalArrangement = Arrangement.spacedBy(6.dp)) {
         Canvas(Modifier.fillMaxWidth().height(120.dp)) {
             drawLine(grid, Offset(0f, size.height), Offset(size.width, size.height), 2f)
             val slot = size.width / months.size

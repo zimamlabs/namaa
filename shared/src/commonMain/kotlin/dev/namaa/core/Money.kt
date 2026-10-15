@@ -40,6 +40,28 @@ fun formatMoney(minor: Long): String {
     return (if (minor < 0) "-" else "") + (abs / 100).toString() + "." + (abs % 100).toString().padStart(2, '0')
 }
 
+/**
+ * An amount for the screen. In a right-to-left layout the number is wrapped in a left-to-right isolate and a negative one
+ * gets the true minus sign, so it cannot detach from its digits; Arabic-Indic digits come with the Arabic decimal mark.
+ * [parseMoney] reads all of these back.
+ */
+fun formatAmountDisplay(minor: Long, arabicDigits: Boolean, rtl: Boolean): String {
+    var text = formatMoney(minor)
+    if (rtl && minor < 0) text = "\u2212" + text.removePrefix("-")
+    if (arabicDigits) text = I18n.digits(text, true).replace('.', '٫')
+    return if (rtl) "\u2066$text\u2069" else text
+}
+
+/** Whole-number percentages of [values] that always add up to 100 (largest remainder), so slices never sum to 99. */
+fun percentShares(values: List<Long>): List<Int> {
+    val total = values.sum()
+    if (values.isEmpty() || total <= 0) return values.map { 0 }
+    val floors = values.map { (100L * it / total).toInt() }.toMutableList()
+    val order = values.indices.sortedByDescending { (100L * values[it]) % total }
+    repeat(100 - floors.sum()) { floors[order[it % order.size]]++ }
+    return floors
+}
+
 /** Why an amount typed by the user was not accepted. */
 enum class MoneyProblem { Empty, NotANumber, Ambiguous, TooManyDecimals, TooLarge }
 

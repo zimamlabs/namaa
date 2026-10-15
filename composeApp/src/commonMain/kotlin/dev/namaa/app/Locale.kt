@@ -6,7 +6,7 @@ import dev.namaa.core.I18n
 import dev.namaa.core.Lang
 import dev.namaa.core.Str
 import dev.namaa.core.categoryTitle
-import dev.namaa.core.formatMoney
+import dev.namaa.core.formatAmountDisplay
 
 /** The language and digits the screens use right now. */
 class AppLocale(val lang: Lang, val arabicDigits: Boolean)
@@ -33,4 +33,4 @@ expect fun systemLanguage(): String
 /** A category as shown (built-in names translated). */
 @Composable fun categoryShown(category: String): String = categoryTitle(category, lang())
 /** An amount with the chosen digits. */
-@Composable fun money(minor: Long): String = num(formatMoney(minor))
+@Composable fun money(minor: Long): String = LocalAppLocale.current.let { formatAmountDisplay(minor, it.arabicDigits, it.lang == Lang.Ar) }
