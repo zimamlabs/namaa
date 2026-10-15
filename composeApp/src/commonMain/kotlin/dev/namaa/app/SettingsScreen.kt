@@ -1,93 +1,135 @@
 package dev.namaa.app
 
-import dev.namaa.core.FolderNote
-import dev.namaa.core.Str
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
+import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
+import androidx.compose.material.icons.rounded.Cloud
+import androidx.compose.material.icons.rounded.Info
+import androidx.compose.material.icons.rounded.Language
+import androidx.compose.material.icons.rounded.Lock
+import androidx.compose.material.icons.rounded.Palette
+import androidx.compose.material.icons.rounded.Payments
+import androidx.compose.material.icons.rounded.ViewQuilt
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import okio.Path
+import dev.namaa.core.Sections
+import dev.namaa.core.Str
 
 val currencies = listOf("USD", "EUR", "GBP", "EGP", "SAR", "AED")
 
+/** The Settings pages, in the order of the shared spec (ui-spec-shared.md). Namaa has no reminders, so no Notifications page. About leaves Settings for the About screen. */
+internal enum class SettingsPage(val title: Str, val icon: ImageVector) {
+    Appearance(Str.SetAppearance, Icons.Rounded.Palette),
+    Sections(Str.SetSections, Icons.Rounded.ViewQuilt),
+    Language(Str.LanguageTitle, Icons.Rounded.Language),
+    Currency(Str.SetCurrencyCats, Icons.Rounded.Payments),
+    Data(Str.SetData, Icons.Rounded.Cloud),
+    Privacy(Str.SetPrivacy, Icons.Rounded.Lock),
+    About(Str.AboutNamaa, Icons.Rounded.Info),
+}
+
+@Composable
+internal fun paletteName(id: String): String = when (id) {
+    "ocean" -> Str.PalOcean; "forest" -> Str.PalForest; "violet" -> Str.PalViolet; "rose" -> Str.PalRose; "graphite" -> Str.PalGraphite; else -> Str.PalZimam
+}.t()
+
+@Composable
+internal fun textSizeName(step: Int): String = when (step) { 0 -> Str.TextSmall; 2 -> Str.TextLarge; 3 -> Str.TextLargest; else -> Str.TextNormal }.t()
+
+@Composable
+internal fun modeName(mode: String): String = when (mode) { "light" -> Str.ThemeLight; "dark" -> Str.ThemeDark; else -> Str.ThemeSystem }.t()
+
+internal fun sectionTab(id: String): Tab = Tab.entries.firstOrNull { it.id == id } ?: Tab.Home
+
+/** The sections the user chose to show, in their order. */
+internal fun visibleTabs(settings: dev.namaa.core.Settings): List<Tab> = Sections.visible(settings.sectionOrder, settings.hiddenSections).map(::sectionTab)
+
+/** Settings as a list of labelled rows (icon, title, one line about the current value); a row opens its page. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SettingsScreen(store: NamaaStore, onBack: () -> Unit, onAbout: () -> Unit, onTour: () -> Unit) {
-    val loc = store.location
-    var confirm by remember { mutableStateOf<Path?>(null) }
+internal fun SettingsScreen(store: NamaaStore, page: SettingsPage?, onPage: (SettingsPage?) -> Unit, onBack: () -> Unit, onAbout: () -> Unit, onTour: () -> Unit) {
+    PlatformBackHandler(true) { if (page != null) onPage(null) else onBack() }
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
-        topBar = { TopAppBar(title = { Text(Str.SettingsTitle.t()) }, navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Rounded.ArrowBack, Str.Back.t()) } }) },
+        topBar = {
+            TopAppBar(
+                title = { Text((page?.title ?: Str.SettingsTitle).t(), fontWeight = FontWeight.SemiBold) },
+                navigationIcon = { IconButton(onClick = { if (page != null) onPage(null) else onBack() }) { Icon(Icons.AutoMirrored.Rounded.ArrowBack, Str.Back.t()) } },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background),
+            )
+        },
     ) { padding ->
-        Column(Modifier.fillMaxSize().padding(padding).padding(16.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Panel {
-                Text(Str.Look.t(), style = MaterialTheme.typography.titleSmall)
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    listOf("system" to Str.ThemeSystem, "light" to Str.ThemeLight, "dark" to Str.ThemeDark).forEach { (key, label) ->
-                        FilterChip(store.settings.themeMode == key, { store.updateSettings { it.copy(themeMode = key) } }, { Text(label.t()) })
-                    }
-                }
-                Text(Str.LanguageTitle.t(), style = MaterialTheme.typography.titleSmall)
-                LanguageChips(store)
-                Text(Str.DefaultCurrency.t(), style = MaterialTheme.typography.titleSmall)
-                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) { currencies.take(3).forEach { c -> FilterChip(store.settings.currency == c, { store.setCurrency(c) }, { Text(c) }) } }
-                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) { currencies.drop(3).forEach { c -> FilterChip(store.settings.currency == c, { store.setCurrency(c) }, { Text(c) }) } }
-            }
-            Panel {
-                Text(Str.ZimamFolderTitle.t(), style = MaterialTheme.typography.titleSmall)
-                Text(
-                    if (loc.shared) Str.DataShared.raw(loc.root)
-                    else Str.DataPrivate.t() + if (store.askAccess != null) " " + Str.DataPrivateAsk.t() else "",
-                    style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-                if (!loc.shared) store.askAccess?.let { ask -> Button(onClick = ask) { Text(Str.UseFolderBtn.t()) } }
-                loc.message?.let { note -> Text(if (note.kind == FolderNote.Kind.Unreachable) Str.FolderUnreachable.raw(note.a) else Str.FolderVerifyFailed.raw(note.a, note.b), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.error) }
-                // The old folders stay as a backup after the copy; removing one asks first and checks every file again.
-                val removable = remember(store.folderTick, loc.root) { loc.removableOldFolders() }
-                removable.forEach { old ->
-                    Text(Str.EarlierFolder.raw(old), style = MaterialTheme.typography.bodyMedium)
-                    OutlinedButton(onClick = { confirm = old }) { Text(Str.RemoveOldFolder.t()) }
-                }
-            }
-            BackupPanel(store)
-            Panel {
-                OutlinedButton(onClick = onTour) { Text(Str.ShowTour.t()) }
-                OutlinedButton(onClick = onAbout) { Text(Str.AboutNamaa.t()) }
+        Column(Modifier.fillMaxSize().padding(padding).verticalScroll(rememberScrollState()).padding(horizontal = gutter, vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(rowGap)) {
+            when (page) {
+                null -> SettingsRows(store) { if (it == SettingsPage.About) onAbout() else onPage(it) }
+                SettingsPage.Appearance -> AppearancePage(store)
+                SettingsPage.Sections -> SectionsPage(store)
+                SettingsPage.Language -> LanguagePage(store)
+                SettingsPage.Currency -> CurrencyPage(store)
+                SettingsPage.Data -> DataPage(store, onTour)
+                SettingsPage.Privacy -> PrivacyPage(store)
+                SettingsPage.About -> Unit
             }
         }
     }
-    confirm?.let { old ->
-        AlertDialog(
-            onDismissRequest = { confirm = null },
-            title = { Text(Str.RemoveOldQ.t()) },
-            text = { Text(Str.RemoveOldQBody.raw(old)) },
-            confirmButton = { TextButton(onClick = { loc.removeOldFolder(old); store.useBook(store.book); confirm = null }) { Text(Str.CheckAndRemove.t()) } },
-            dismissButton = { TextButton(onClick = { confirm = null }) { Text(Str.KeepIt.t()) } },
-        )
+}
+
+@Composable
+private fun SettingsRows(store: NamaaStore, onOpen: (SettingsPage) -> Unit) {
+    val st = store.settings
+    val summaries = mapOf(
+        SettingsPage.Appearance to listOf(modeName(st.themeMode), paletteName(st.palette), textSizeName(st.textSize)).joinToString(", "),
+        SettingsPage.Sections to Str.SummarySections.t(sectionTab(st.startSection).label.t(), visibleTabs(st).size),
+        SettingsPage.Language to listOf(when (st.lang) { "en" -> Str.LangEnglish.text(dev.namaa.core.Lang.En); "ar" -> Str.LangArabic.text(dev.namaa.core.Lang.En); else -> Str.ThemeSystem.t() }, if (st.arabicDigits) Str.DigitsArabic.text(dev.namaa.core.Lang.En) else Str.DigitsWestern.text(dev.namaa.core.Lang.En)).joinToString(", "),
+        SettingsPage.Currency to st.currency,
+        SettingsPage.Data to store.location.root.toString(),
+        SettingsPage.Privacy to (if (st.appLock) Str.SummaryAppLockOn else Str.SummaryPrivacy).t(),
+        SettingsPage.About to "v$APP_VERSION",
+    )
+    SettingsPage.entries.forEach { p -> SettingsRow(p.icon, p.title.t(), summaries.getValue(p)) { onOpen(p) } }
+}
+
+@Composable
+private fun SettingsRow(icon: ImageVector, title: String, summary: String, onClick: () -> Unit) {
+    Row(
+        Modifier.fillMaxWidth().heightIn(min = 72.dp).clip(RoundedCornerShape(20.dp)).clickable(role = Role.Button, onClick = onClick).background(MaterialTheme.colorScheme.surfaceContainer).padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp),
+    ) {
+        Box(Modifier.size(44.dp).clip(RoundedCornerShape(14.dp)).background(MaterialTheme.colorScheme.primaryContainer), contentAlignment = Alignment.Center) { Icon(icon, null, tint = MaterialTheme.colorScheme.onPrimaryContainer) }
+        Column(Modifier.weight(1f)) {
+            Text(title, style = MaterialTheme.typography.titleMedium)
+            Text(summary, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 2)
+        }
+        Icon(Icons.AutoMirrored.Rounded.KeyboardArrowRight, null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
 

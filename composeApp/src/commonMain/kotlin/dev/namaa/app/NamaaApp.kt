@@ -46,8 +46,8 @@ import dev.namaa.core.Txn
 
 const val APP_VERSION = "0.6.0"
 
-enum class Tab(val label: Str, val icon: ImageVector) {
-    Home(Str.TabHome, Icons.Rounded.Home), Money(Str.TabMoney, Icons.Rounded.ReceiptLong), Accounts(Str.TabAccounts, Icons.Rounded.AccountBalanceWallet), Plan(Str.TabPlan, Icons.Rounded.Savings), Report(Str.TabReport, Icons.Rounded.BarChart),
+enum class Tab(val id: String, val label: Str, val icon: ImageVector) {
+    Home("home", Str.TabHome, Icons.Rounded.Home), Money("money", Str.TabMoney, Icons.Rounded.ReceiptLong), Accounts("accounts", Str.TabAccounts, Icons.Rounded.AccountBalanceWallet), Plan("plan", Str.TabPlan, Icons.Rounded.Savings), Report("report", Str.TabReport, Icons.Rounded.BarChart),
 }
 
 /** Which dialog is open: a new or edited transaction, a transfer, or a new or renamed account. */
@@ -70,19 +70,20 @@ fun NamaaApp(store: NamaaStore) {
     CompositionLocalProvider(
         LocalAppLocale provides AppLocale(language, store.settings.arabicDigits),
         LocalLayoutDirection provides if (language == Lang.Ar) LayoutDirection.Rtl else LayoutDirection.Ltr,
-    ) { NamaaTheme(store.settings.themeMode) {
+    ) { NamaaTheme(store.settings.themeMode, store.settings.palette, store.settings.textSize, store.settings.density == "compact") {
         var splash by remember { mutableStateOf(true) }
         var tab by remember { mutableStateOf(Tab.Home) }
         var page by remember { mutableStateOf<Page?>(null) }
+        var settingsPage by remember { mutableStateOf<SettingsPage?>(null) }
         var editing by remember { mutableStateOf<Editing?>(null) }
         var planSection by remember { mutableStateOf(PlanSection.Budgets) }
         var planAdd by remember { mutableStateOf(0) }
         Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
             PlatformBackHandler(page != null) { page = if (page == Page.About) Page.Settings else null }
             PlatformBackHandler(page == null && tab != Tab.Home) { tab = Tab.Home }
-            if (store.blocked.isNotEmpty()) RecoveryScreen(store) else when (page) {
+            if (store.locked) LockScreen(store) else if (store.blocked.isNotEmpty()) RecoveryScreen(store) else when (page) {
                 Page.About -> AboutScreen(onBack = { page = Page.Settings }, onTour = { page = null; store.tourRequested = true })
-                Page.Settings -> SettingsScreen(store, onBack = { page = null }, onAbout = { page = Page.About }, onTour = { page = null; store.tourRequested = true })
+                Page.Settings -> SettingsScreen(store, settingsPage, { settingsPage = it }, onBack = { page = null }, onAbout = { page = Page.About }, onTour = { page = null; store.tourRequested = true })
                 null -> Scaffold(
                     containerColor = MaterialTheme.colorScheme.background,
                     topBar = {
