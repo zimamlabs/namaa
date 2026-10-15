@@ -76,7 +76,7 @@ fun NamaaApp(store: NamaaStore) {
         Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
             PlatformBackHandler(page != null) { page = if (page == Page.About) Page.Settings else null }
             PlatformBackHandler(page == null && tab != Tab.Home) { tab = Tab.Home }
-            when (page) {
+            if (store.blocked.isNotEmpty()) RecoveryScreen(store) else when (page) {
                 Page.About -> AboutScreen(onBack = { page = Page.Settings }, onTour = { page = null; store.tourRequested = true })
                 Page.Settings -> SettingsScreen(store, onBack = { page = null }, onAbout = { page = Page.About }, onTour = { page = null; store.tourRequested = true })
                 null -> Scaffold(

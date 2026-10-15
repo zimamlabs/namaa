@@ -94,6 +94,7 @@ fun HomeScreen(
     val total = store.accounts.sumOf { balance(it, store.txns) }
     val currency = store.accounts.map { it.currency }.distinct().singleOrNull() ?: ""
     LazyColumn(Modifier.fillMaxSize().padding(padding), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+        if (store.rowProblems.isNotEmpty()) item { RowProblemsCard(store) }
         item {
             Card(Modifier.fillMaxWidth(), shape = RoundedCornerShape(28.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer), border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant), elevation = CardDefaults.cardElevation(0.dp)) {
                 Column(Modifier.heroGlow().padding(22.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
