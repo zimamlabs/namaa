@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- **A side menu and swipe between sections.** Swipe left or right to move between Home, Money, Accounts, Plan and Report (mirrored in Arabic); open the menu with the button or by swiping from the edge on Home. The menu has the sections, Search, Quick add, Settings, What's new, the tour and About. The start section from Settings is honoured, and Reduce animations jumps instead of animating.
+
 - **Settings is a list of sections** (Appearance, Sections and layout, Language, Currency and categories, Data and storage, Privacy and security, About), the same shape as the other Zimam apps.
 - **Appearance:** mode, six colour themes, four text sizes with a live preview, comfortable or compact spacing, reduce animations.
 - **Sections and layout:** choose which sections show, their order and the start section.
