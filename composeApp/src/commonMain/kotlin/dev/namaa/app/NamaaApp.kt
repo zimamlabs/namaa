@@ -66,11 +66,11 @@ private enum class Page { Settings, About }
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NamaaApp(store: NamaaStore) {
-    val language = I18n.resolve(store.prefs.lang, systemLanguage())
+    val language = I18n.resolve(store.settings.lang, systemLanguage())
     CompositionLocalProvider(
-        LocalAppLocale provides AppLocale(language, store.prefs.arabicDigits),
+        LocalAppLocale provides AppLocale(language, store.settings.arabicDigits),
         LocalLayoutDirection provides if (language == Lang.Ar) LayoutDirection.Rtl else LayoutDirection.Ltr,
-    ) { NamaaTheme(store.prefs.theme) {
+    ) { NamaaTheme(store.settings.themeMode) {
         var splash by remember { mutableStateOf(true) }
         var tab by remember { mutableStateOf(Tab.Home) }
         var page by remember { mutableStateOf<Page?>(null) }
@@ -123,7 +123,7 @@ fun NamaaApp(store: NamaaStore) {
                     if (e.legs == null) store.saveTransfer(date, from, to, minor, note) else store.updateTransfer(e.legs.first().transferId, date, from, to, minor, note)
                     editing = null
                 }
-                is Editing.AccountEdit -> AccountDialog(e.account, store.prefs.currency, onDismiss = { editing = null }) { saved ->
+                is Editing.AccountEdit -> AccountDialog(e.account, store.settings.currency, onDismiss = { editing = null }) { saved ->
                     store.saveAccounts(if (e.account == null) store.accounts + saved else store.accounts.map { if (it.id == saved.id) saved else it })
                     editing = null
                 }

@@ -43,10 +43,10 @@ import kotlinx.coroutines.launch
 @Composable
 fun WelcomeHost(store: NamaaStore) {
     // Decided once, when Namaa opens: finishing the tour changes what is stored.
-    val decision = remember { Onboarding.decide(store.prefs.lastSeenVersion, store.prefs.tourDone, store.hasData, APP_VERSION) }
+    val decision = remember { Onboarding.decide(store.settings.lastSeenVersion, store.settings.tourDone, store.hasData, APP_VERSION) }
     var notesClosed by remember { mutableStateOf(false) }
     var tourClosed by remember { mutableStateOf(false) }
-    fun seen() = store.updatePrefs { it.copy(lastSeenVersion = APP_VERSION, tourDone = true) }
+    fun seen() = store.updateSettings { it.copy(lastSeenVersion = APP_VERSION, tourDone = true) }
     if (store.tourRequested || (decision == Welcome.Tour && !tourClosed)) {
         Tour(store, onClose = { seen(); tourClosed = true; store.tourRequested = false })
     } else if (decision == Welcome.WhatsNew && !notesClosed) {
@@ -88,11 +88,11 @@ private fun Tour(store: NamaaStore, onClose: () -> Unit) {
                     }
                     if (i == 3) {
                         Spacer(Modifier.height(24.dp))
-                        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) { currencies.take(3).forEach { c -> FilterChip(store.prefs.currency == c, { store.setCurrency(c) }, { Text(c) }) } }
-                        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) { currencies.drop(3).forEach { c -> FilterChip(store.prefs.currency == c, { store.setCurrency(c) }, { Text(c) }) } }
+                        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) { currencies.take(3).forEach { c -> FilterChip(store.settings.currency == c, { store.setCurrency(c) }, { Text(c) }) } }
+                        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) { currencies.drop(3).forEach { c -> FilterChip(store.settings.currency == c, { store.setCurrency(c) }, { Text(c) }) } }
                         Spacer(Modifier.height(8.dp))
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            listOf("system" to Str.ThemeSystem, "light" to Str.ThemeLight, "dark" to Str.ThemeDark).forEach { (key, label) -> FilterChip(store.prefs.theme == key, { store.updatePrefs { it.copy(theme = key) } }, { Text(label.t()) }) }
+                            listOf("system" to Str.ThemeSystem, "light" to Str.ThemeLight, "dark" to Str.ThemeDark).forEach { (key, label) -> FilterChip(store.settings.themeMode == key, { store.updateSettings { it.copy(themeMode = key) } }, { Text(label.t()) }) }
                         }
                         Spacer(Modifier.height(8.dp))
                         Column { LanguageChips(store) }

@@ -15,10 +15,10 @@ class OnboardingTest {
     @Test fun notesFallBackToTheNewestOlderVersion() { assertEquals(ReleaseNotes.forVersion("0.2.0"), ReleaseNotes.forVersion("0.2.1")); assertEquals(emptyList(), ReleaseNotes.forVersion("0.0.1")) }
 
     @Test fun prefsRoundTripAndSurviveGarbage() {
-        val fs = FakeFileSystem(); val path = "/p/prefs.json".toPath(); val f = PrefsFile(fs, path)
-        assertEquals(Prefs(), f.load())
-        f.save(Prefs("0.2.0", true, "dark", "EGP")); assertEquals(Prefs("0.2.0", true, "dark", "EGP"), f.load())
-        fs.write(path) { writeUtf8("not json") }; assertEquals(Prefs(), f.load())
+        val fs = FakeFileSystem(); val path = "/p/prefs.json".toPath(); val f = SettingsRepository(fs, path)
+        assertEquals(Settings(), f.current)
+        f.update { Settings("0.2.0", true, "dark", "EGP") }; assertEquals(Settings("0.2.0", true, "dark", "EGP"), SettingsRepository(fs, path).current)
+        fs.write(path) { writeUtf8("not json") }; assertEquals(Settings(), f.reload())
     }
 
     @Test fun monthsShiftAcrossYears() {
