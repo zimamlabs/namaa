@@ -8,7 +8,7 @@ plugins {
 }
 
 // One version for the app, the Android build and the desktop package; scripts/release.sh reads this line.
-val appVersion = "0.6.0"
+val appVersion = "0.7.0"
 
 kotlin {
     androidTarget()
@@ -51,7 +51,7 @@ android {
         applicationId = "dev.zimma.money"
         minSdk = 26
         targetSdk = 35
-        versionCode = 9
+        versionCode = 10
         versionName = appVersion
     }
     signingConfigs {

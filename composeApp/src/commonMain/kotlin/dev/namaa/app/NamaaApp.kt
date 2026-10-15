@@ -63,7 +63,7 @@ import dev.namaa.core.ReleaseNotes
 import dev.namaa.core.Account
 import dev.namaa.core.Txn
 
-const val APP_VERSION = "0.6.0"
+const val APP_VERSION = "0.7.0"
 
 enum class Tab(val id: String, val label: Str, val icon: ImageVector) {
     Home("home", Str.TabHome, Icons.Rounded.Home), Money("money", Str.TabMoney, Icons.Rounded.ReceiptLong), Accounts("accounts", Str.TabAccounts, Icons.Rounded.AccountBalanceWallet), Plan("plan", Str.TabPlan, Icons.Rounded.Savings), Report("report", Str.TabReport, Icons.Rounded.BarChart),

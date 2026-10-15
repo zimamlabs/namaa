@@ -30,6 +30,11 @@ object Onboarding {
 /** Short notes per version, taken from the changelog; shown once after an update. Each note is English then Arabic. */
 object ReleaseNotes {
     private val notes: Map<String, List<Pair<String, String>>> = mapOf(
+        "0.7.0" to listOf(
+            "A side menu and swipe between the sections, and Settings as a list of sections with colour themes, text size and an optional app lock." to "قائمة جانبية وتمرير بين الأقسام، وإعدادات على شكل قائمة أقسام مع ألوان وحجم نص وقفل اختياري للتطبيق.",
+            "Long-press any row for Edit, Duplicate, Split, History, Archive or Delete." to "اضغط مطولًا على أي صف للتعديل أو التكرار أو التقسيم أو السجل أو الأرشفة أو الحذف.",
+            "Arabic amounts show a proper minus sign, and the Money list can be sorted." to "تظهر المبالغ العربية بعلامة سالب صحيحة، ويمكن ترتيب قائمة المعاملات.",
+        ),
         "0.6.0" to listOf(
             "Your data is safer: a damaged file is never treated as empty, transfers stay balanced, every delete asks first, and typed amounts like 1,234 are no longer misread." to "بياناتك أكثر أمانًا: لا يُعدّ الملف التالف فارغًا، وتبقى التحويلات متوازنة، وكل حذف يسأل أولًا، ولا تُقرأ المبالغ مثل 1,234 خطأً.",
             "Different currencies are never added together: totals, budgets and debts are shown per currency." to "لا تُجمع العملات المختلفة معًا: تظهر المجاميع والميزانيات والديون لكل عملة.",
