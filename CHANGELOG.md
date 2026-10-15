@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.5.1
+
+- A new app icon.
+
 ## 0.5.0
 
 - **Arabic and right-to-left.** Namaa now has an Arabic interface with a mirrored layout (Settings, Language: System, English or العربية, applied at once). Menus, dialogs, the tour, About, the built-in categories and dates are in Arabic, and the charts run right to left. Digits can be Western (0 1 2 3) or Arabic-Indic (٠ ١ ٢ ٣). You can type amounts in either kind of digit.

@@ -63,6 +63,8 @@ class LangTest {
     }
 
     @Test fun releaseNotesComeInBothLanguages() {
+        assertTrue(ReleaseNotes.forVersion("0.5.1", Lang.Ar).first().contains("أيقونة"))
+        assertTrue(ReleaseNotes.forVersion("0.5.1", Lang.En).first().contains("icon"))
         assertTrue(ReleaseNotes.forVersion("0.5.0", Lang.Ar).first().contains("عربية"))
         assertTrue(ReleaseNotes.forVersion("0.5.0", Lang.En).first().startsWith("An Arabic"))
         assertEquals(ReleaseNotes.forVersion("0.3.0", Lang.En).size, ReleaseNotes.forVersion("0.3.0", Lang.Ar).size)

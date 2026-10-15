@@ -44,7 +44,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import dev.namaa.core.Account
 import dev.namaa.core.Txn
 
-const val APP_VERSION = "0.5.0"
+const val APP_VERSION = "0.5.1"
 
 enum class Tab(val label: Str, val icon: ImageVector) {
     Home(Str.TabHome, Icons.Rounded.Home), Money(Str.TabMoney, Icons.Rounded.ReceiptLong), Accounts(Str.TabAccounts, Icons.Rounded.AccountBalanceWallet), Plan(Str.TabPlan, Icons.Rounded.Savings), Report(Str.TabReport, Icons.Rounded.BarChart),
