@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- **Arabic amounts read correctly.** In Arabic, amounts get a real minus sign and are isolated so the sign cannot detach from its digits, and Arabic-Indic digits use the Arabic decimal mark. Donut percentages always add up to 100. The charts have text descriptions for screen readers. Marked unreviewed by a native reader.
+- **Sort** the Money list by newest, oldest, largest or smallest.
+
 - **Long-press menus on every row and card**, from one shared component with a haptic tick: a transaction offers Edit, Duplicate, Split and Delete (asks first); an account offers Edit, History (opens Money filtered to it) and Archive; budgets, repeating rules and debts offer Edit, Delete and, for debts, Record a payment. Archived accounts stay in your totals and history but no longer show in pickers.
 
 - **A side menu and swipe between sections.** Swipe left or right to move between Home, Money, Accounts, Plan and Report (mirrored in Arabic); open the menu with the button or by swiping from the edge on Home. The menu has the sections, Search, Quick add, Settings, What's new, the tour and About. The start section from Settings is honoured, and Reduce animations jumps instead of animating.

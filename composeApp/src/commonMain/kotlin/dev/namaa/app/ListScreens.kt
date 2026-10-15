@@ -49,6 +49,7 @@ import dev.namaa.core.Account
 import dev.namaa.core.Txn
 import dev.namaa.core.balance
 import dev.namaa.core.formatMoney
+import dev.namaa.core.TxnSort
 import dev.namaa.core.monthSummary
 import dev.namaa.core.shiftMonth
 
@@ -67,6 +68,9 @@ fun TransactionsScreen(store: NamaaStore, padding: PaddingValues, onEdit: (Txn) 
                     FilterChip(open || filter.category.isNotBlank() || filter.accountId.isNotBlank() || filter.from != null || filter.to != null, { open = !open }, { Text(Str.Filters.t()) }, leadingIcon = { Icon(Icons.Rounded.FilterList, null, Modifier.size(18.dp)) })
                 }
                 if (open) {
+                    LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        items(TxnSort.entries) { s -> FilterChip(filter.sort == s, { filter = filter.copy(sort = s) }, { Text(when (s) { TxnSort.Newest -> Str.SortNewest; TxnSort.Oldest -> Str.SortOldest; TxnSort.Largest -> Str.SortLargest; TxnSort.Smallest -> Str.SortSmallest }.t()) }) }
+                    }
                     LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) { items(categories) { c -> FilterChip(filter.category == c, { filter = filter.copy(category = if (filter.category == c) "" else c) }, { Text(categoryShown(c)) }) } }
                     if (store.accounts.size > 1) LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) { items(store.accounts, key = { it.id }) { a -> FilterChip(filter.accountId == a.id, { filter = filter.copy(accountId = if (filter.accountId == a.id) "" else a.id) }, { Text(a.name) }) } }
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
