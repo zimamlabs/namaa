@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- **Repeating rules.** Editing the start date of a rule no longer adds a second transaction for a month or week already covered. A rule that starts far in the past asks before adding many transactions at once, and the catch-up now writes each year file once, so it is fast.
+
 - The previous product name is gone from the app, the README and the docs. Data from earlier versions is still found and copied.
 
 - **Safer CSV exports.** Text that a spreadsheet would run as a formula (starting with = + - or @) is exported as plain text, and there is a new currency column. Your own year files are not changed.

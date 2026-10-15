@@ -178,19 +178,21 @@ class MoneyBook(
 
     /** Turns every repeating transaction that has come due (up to [today]) into a real one; safe to call again, it never doubles. Returns how many were added. */
     fun applyRecurring(today: LocalDate = today()): Int {
-        var added = 0
         val rules = recurring()
+        val known = allTransactions().mapTo(HashSet()) { it.id }
+        val fresh = sortedMapOf<Int, MutableList<Txn>>()
         val updated = rules.map { rule ->
             val due = dueDates(rule, today)
             due.forEach { d ->
-                if (allTransactions().none { it.id == recurringTxnId(rule, d) }) {
-                    saveTransaction(Txn(recurringTxnId(rule, d), d, rule.amountMinor, rule.accountId, rule.category, rule.note)); added++
-                }
+                val id = recurringTxnId(rule, d)
+                if (known.add(id)) fresh.getOrPut(d.year) { mutableListOf() } += Txn(id, d, rule.amountMinor, rule.accountId, rule.category, rule.note)
             }
             if (due.isEmpty()) rule else rule.copy(lastGenerated = due.last())
         }
+        // One write per year file; the rules are saved after the transactions, and ids make a repeat after a crash harmless.
+        fresh.forEach { (year, list) -> writeYear(year, transactions(year) + list) }
         if (updated != rules) saveRecurring(updated)
-        return added
+        return fresh.values.sumOf { it.size }
     }
 
     /** Writes the CSV for the given transactions into `exports/` and returns its path. */
