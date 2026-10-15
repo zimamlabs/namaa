@@ -29,7 +29,7 @@ class DataLocation(
     var message: FolderNote? = null
         private set
 
-    // Two old folders can share a name (Zimma, Zimam/Zimma), so the label includes the parent when it is Zimam.
+    // Two old folders can share a name (the private one and the shared one), so the label includes the parent when it is Zimam.
     private fun label(p: Path) = if (p.parent?.name == "Zimam") "Zimam-${p.name}" else p.name
 
     fun oldFolders(): List<Path> = legacy.filter { it != sharedFolder && fs.exists(it) && fs.metadata(it).isDirectory }

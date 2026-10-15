@@ -65,11 +65,11 @@ apksigner verify --print-certs Namaa_<version>_Android_arm64-v8a.apk
 
 ## Where your data lives
 
-On the phone Namaa keeps its files in a visible `Zimam/Namaa` folder when you allow *All files access* (Settings has the button), so they survive reinstalling the app. Without it they stay inside the app. Earlier folders (the one inside the app, or `~/Namaa` on the desktop) are copied into the new folder and every file is checked by size and SHA-256. **Nothing is lost:** the old folder is never deleted automatically, a file already in the new folder is never overwritten (both are kept), and if anything does not verify Namaa keeps using the old folder and tries again later. Settings can remove the old folder, but only after checking every file again and asking you first.
+On the phone Namaa keeps its files in a visible `Zimam/Namaa` folder when you allow *All files access* (Settings has the button), so they survive reinstalling the app. Without it they stay inside the app. Earlier folders (the one inside the app, or the old desktop folder) are copied into the new folder and every file is checked by size and SHA-256. **Nothing is lost:** the old folder is never deleted automatically, a file already in the new folder is never overwritten (both are kept), and if anything does not verify Namaa keeps using the old folder and tries again later. Settings can remove the old folder, but only after checking every file again and asking you first.
 
-## Formerly Zimma
+## Updating from earlier versions
 
-Namaa was called Zimma until 0.3.0. The Android application id (`dev.zimma.money`) and the signing key are unchanged, so Namaa installs as an update over Zimma and keeps your data: on first open it copies the old folders (`Zimam/Zimma` and the private one) into `Zimam/Namaa`, checks every file, never overwrites, and leaves the old folders as a backup. Settings has a button to remove an old folder, which checks everything again first.
+Namaa keeps its original Android application id (`dev.zimma.money`) and its signing key, so it installs as an update and keeps your data: on first open it copies the folders earlier versions used into `Zimam/Namaa`, checks every file, never overwrites, and leaves the old folders as a backup. Settings has a button to remove an old folder, which checks everything again first.
 
 ## Privacy
 

@@ -7,10 +7,10 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
-/** Every file Zimma writes (data, budgets, repeating, debts, exports) lands under the one data folder, nothing beside it. */
+/** Every file Namaa writes (data, budgets, repeating, debts, exports) lands under the one data folder, nothing beside it. */
 class StaysInFolderTest {
     @Test fun allFilesLandUnderTheDataFolder() {
-        val fs = FakeFileSystem(); val root = "/sdcard/Zimam/Zimma".toPath()
+        val fs = FakeFileSystem(); val root = "/sdcard/${LegacyNames.SHARED_FOLDER}".toPath()
         val b = MoneyBook(fs, root)
         b.saveAccounts(listOf(Account("c", "Cash"), Account("b", "Bank")))
         b.saveTransaction(Txn("", LocalDate(2026, 10, 1), -100, "c", "Food"))

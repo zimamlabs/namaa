@@ -12,8 +12,8 @@ import kotlin.test.assertTrue
 
 class DataLocationTest {
     private val fs = FakeFileSystem()
-    private val priv = "/data/Zimma".toPath()
-    private val shared = "/sdcard/Zimam/Zimma".toPath()
+    private val priv = "/data/${LegacyNames.FOLDER}".toPath()
+    private val shared = "/sdcard/${LegacyNames.SHARED_FOLDER}".toPath()
     private var allowed = false
 
     private fun put(p: Path, text: String) { fs.createDirectories(p.parent!!); fs.write(p) { writeUtf8(text) } }
@@ -75,16 +75,16 @@ class DataLocationTest {
     }
 
     @Test fun theRenameCopiesBothOldFoldersNewestFirstAndKeepsEveryFile() {
-        val namaa = "/sdcard/Zimam/Namaa".toPath(); val zimmaShared = "/sdcard/Zimam/Zimma".toPath()
-        put(zimmaShared / "accounts.json", "NEWER"); put(zimmaShared / "2026.csv", "rows")
+        val namaa = "/sdcard/Zimam/Namaa".toPath(); val oldShared = "/sdcard/${LegacyNames.SHARED_FOLDER}".toPath()
+        put(oldShared / "accounts.json", "NEWER"); put(oldShared / "2026.csv", "rows")
         put(priv / "accounts.json", "OLDER"); put(priv / "2025.csv", "old rows")
         allowed = true
-        val l = DataLocation(fs, priv, namaa, listOf(zimmaShared, priv)) { allowed }
+        val l = DataLocation(fs, priv, namaa, listOf(oldShared, priv)) { allowed }
         assertTrue(l.refresh()); assertEquals(namaa, l.root); assertNull(l.message)
         assertEquals("NEWER", fs.read(namaa / "accounts.json") { readUtf8() })
-        assertEquals("OLDER", fs.read(namaa / "accounts (from Zimma).json") { readUtf8() })
+        assertEquals("OLDER", fs.read(namaa / "accounts (from ${LegacyNames.FOLDER}).json") { readUtf8() })
         assertEquals("rows", fs.read(namaa / "2026.csv") { readUtf8() }); assertEquals("old rows", fs.read(namaa / "2025.csv") { readUtf8() })
-        assertTrue(fs.exists(zimmaShared / "accounts.json") && fs.exists(priv / "accounts.json"))
-        assertEquals(setOf(zimmaShared, priv), l.removableOldFolders().toSet())
+        assertTrue(fs.exists(oldShared / "accounts.json") && fs.exists(priv / "accounts.json"))
+        assertEquals(setOf(oldShared, priv), l.removableOldFolders().toSet())
     }
 }

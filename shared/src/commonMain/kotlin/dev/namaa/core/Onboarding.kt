@@ -35,7 +35,7 @@ object ReleaseNotes {
             "An Arabic interface with a right-to-left layout. Choose the language and the digits in Settings." to "واجهة عربية بتخطيط من اليمين إلى اليسار. اختر اللغة والأرقام من الإعدادات.",
         ),
         "0.4.0" to listOf(
-            "Zimma is now Namaa (نماء, growth), with a new icon. Your data is copied into the Zimam/Namaa folder; the old folders stay as a backup." to "صار «ذمّة» الآن «نماء» بأيقونة جديدة. تُنسخ بياناتك إلى مجلد Zimam/Namaa وتبقى المجلدات القديمة كنسخة احتياطية.",
+            "A new name, Namaa (نماء, growth), with a new icon. Your data is copied into the Zimam/Namaa folder; the old folders stay as a backup." to "اسم جديد: «نماء»، مع أيقونة جديدة. تُنسخ بياناتك إلى مجلد Zimam/Namaa وتبقى المجلدات القديمة كنسخة احتياطية.",
         ),
         "0.3.0" to listOf(
             "Budgets per category with progress bars and a warning when you go over." to "ميزانيات لكل فئة بأشرطة تقدّم وتحذير عند التجاوز.",
@@ -43,7 +43,7 @@ object ReleaseNotes {
         ),
         "0.2.0" to listOf(
             "A Home page with this month at a glance, recent transactions and shortcuts." to "صفحة رئيسية تعرض شهرك بنظرة واحدة، وأحدث المعاملات، واختصارات.",
-            "Your data now lives in one Zimam folder (Zimam/Zimma). Old folders are copied and checked, never deleted." to "صارت بياناتك في مجلد زمام واحد (Zimam/Zimma). تُنسخ المجلدات القديمة وتُفحص ولا تُحذف أبدًا.",
+            "Your data now lives in one Zimam folder. Old folders are copied and checked, never deleted." to "صارت بياناتك في مجلد زمام واحد. تُنسخ المجلدات القديمة وتُفحص ولا تُحذف أبدًا.",
             "Pick a date from a calendar, a first-run tour, and these notes after each update." to "اختيار التاريخ من تقويم، وجولة تعريفية عند أول تشغيل، وهذه الملاحظات بعد كل تحديث.",
         ),
         "0.1.2" to listOf("A better opening screen." to "شاشة افتتاحية أفضل."),
