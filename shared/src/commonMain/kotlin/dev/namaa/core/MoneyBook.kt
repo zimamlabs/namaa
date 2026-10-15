@@ -130,6 +130,25 @@ class MoneyBook(
         return saved
     }
 
+    /** A copy of a transaction (same date, account, category and note) with a new id; returns that id. Transfer legs are duplicated as a transfer in the screen, never alone. */
+    fun duplicateTransaction(id: String): String {
+        val t = allTransactions().firstOrNull { it.id == id } ?: throw IllegalArgumentException("no such transaction")
+        require(t.transferId.isEmpty()) { "a transfer is not duplicated leg by leg" }
+        return saveTransaction(t.copy(id = "")).id
+    }
+
+    /** Splits a transaction in two with the same sign, account, date and note: this one keeps [firstMinor] (a positive part of its size), the new one in [newCategory] gets the rest. Written together; returns the new id. */
+    fun splitTransaction(id: String, firstMinor: Long, newCategory: String): String {
+        val t = allTransactions().firstOrNull { it.id == id } ?: throw IllegalArgumentException("no such transaction")
+        require(t.transferId.isEmpty()) { "a transfer cannot be split" }
+        val size = kotlin.math.abs(t.amountMinor)
+        require(firstMinor in 1 until size) { "the first part must be more than zero and less than the whole" }
+        val sign = if (t.amountMinor < 0) -1 else 1
+        val second = t.copy(id = newId(), amountMinor = sign * (size - firstMinor), category = newCategory)
+        writeYear(t.date.year, transactions(t.date.year).map { if (it.id == id) t.copy(amountMinor = sign * firstMinor) else it } + second)
+        return second.id
+    }
+
     /** Moves [amountMinor] (positive) from one account to another as two legs that always sum to zero, written together; returns the transfer id. */
     fun saveTransfer(date: LocalDate, fromAccount: String, toAccount: String, amountMinor: Long, note: String = ""): String {
         requireSameCurrency(fromAccount, toAccount)

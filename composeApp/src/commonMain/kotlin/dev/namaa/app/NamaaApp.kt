@@ -165,7 +165,7 @@ fun NamaaApp(store: NamaaStore, drawerState: DrawerState = rememberDrawerState(D
                                     Tab.Home -> HomeScreen(store, padding, onExpense = { editing = Editing.Transaction(null, false) }, onIncome = { editing = Editing.Transaction(null, true) },
                                         onTransfer = { editing = Editing.Transfer() }, onOpen = { goTo(it) }, onEdit = { editing = editorFor(store, it) }, onTour = { store.tourRequested = true })
                                     Tab.Money -> TransactionsScreen(store, padding) { editing = editorFor(store, it) }
-                                    Tab.Accounts -> AccountsScreen(store, padding) { editing = Editing.AccountEdit(it) }
+                                    Tab.Accounts -> AccountsScreen(store, padding, onEdit = { editing = Editing.AccountEdit(it) }, onHistory = { store.historyAccount = it; goTo(Tab.Money) })
                                     Tab.Plan -> PlanScreen(store, padding, planSection, { planSection = it }, planAdd)
                                     Tab.Report -> ReportScreen(store, padding)
                                 }
@@ -175,6 +175,7 @@ fun NamaaApp(store: NamaaStore, drawerState: DrawerState = rememberDrawerState(D
                     }
                 }
             }
+            store.splitting?.let { t -> SplitDialog(t, onDismiss = { store.splitting = null }) { first, category -> store.splitTxn(t.id, first, category); store.splitting = null } }
             if (quickAdd) QuickAddDialog(
                 onDismiss = { quickAdd = false },
                 onExpense = { quickAdd = false; editing = Editing.Transaction(null, false) },
@@ -188,9 +189,9 @@ fun NamaaApp(store: NamaaStore, drawerState: DrawerState = rememberDrawerState(D
                 confirmButton = { TextButton(onClick = { showNew = false }) { Text(Str.Close.t()) } },
             )
             when (val e = editing) {
-                is Editing.Transaction -> TxnDialog(e.txn, e.income, store.accounts, store.today, onDismiss = { editing = null },
+                is Editing.Transaction -> TxnDialog(e.txn, e.income, store.accounts.filter { !it.archived || it.id == e.txn?.accountId }, store.today, onDismiss = { editing = null },
                     onDelete = e.txn?.let { t -> { store.deleteTxn(t.id); editing = null } }) { saved -> store.saveTxn(saved); editing = null }
-                is Editing.Transfer -> TransferDialog(store.accounts, store.today, e.legs, e.legs?.let { l -> { store.deleteTxn(l.first().id); editing = null } }, onDismiss = { editing = null }) { from, to, minor, date, note ->
+                is Editing.Transfer -> TransferDialog(store.accounts.filter { !it.archived || e.legs?.any { l -> l.accountId == it.id } == true }, store.today, e.legs, e.legs?.let { l -> { store.deleteTxn(l.first().id); editing = null } }, onDismiss = { editing = null }) { from, to, minor, date, note ->
                     if (e.legs == null) store.saveTransfer(date, from, to, minor, note) else store.updateTransfer(e.legs.first().transferId, date, from, to, minor, note)
                     editing = null
                 }

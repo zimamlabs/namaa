@@ -68,9 +68,9 @@ fun SectionTitle(icon: ImageVector, text: String, trailing: (@Composable () -> U
 }
 
 @Composable
-fun TxnRow(t: Txn, accounts: List<Account>, onClick: () -> Unit) {
+internal fun TxnRow(t: Txn, accounts: List<Account>, actions: List<MenuAction>, onClick: () -> Unit) {
     val colour = if (t.amountMinor < 0) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.secondary
-    Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).clickable(onClick = onClick).padding(vertical = 6.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+    ContextMenuBox(actions, onClick, Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp))) { Row(Modifier.fillMaxWidth().padding(vertical = 8.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
         Box(Modifier.size(38.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primaryContainer), contentAlignment = Alignment.Center) {
             Text(categoryShown(t.category).take(1).uppercase(), color = MaterialTheme.colorScheme.onPrimaryContainer, fontWeight = FontWeight.SemiBold)
         }
@@ -80,7 +80,7 @@ fun TxnRow(t: Txn, accounts: List<Account>, onClick: () -> Unit) {
             Text(prettyDate(t.date) + (if (account.isNotEmpty() && accounts.size > 1) "  ·  $account" else "") + (if (t.note.isNotBlank()) "  ·  ${t.note}" else ""), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1)
         }
         Text(money(t.amountMinor), style = MaterialTheme.typography.titleSmall, color = colour)
-    }
+    } }
 }
 
 /** The first page: where the month stands, where the money went, and the quickest ways to add to it. */
@@ -144,7 +144,7 @@ fun HomeScreen(
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 SectionTitle(Icons.Rounded.AccountBalanceWallet, Str.TabAccounts.t()) { TextButton(onClick = { onOpen(Tab.Accounts) }) { Text(Str.All.t()) } }
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    items(store.accounts, key = { it.id }) { a ->
+                    items(store.activeAccounts, key = { it.id }) { a ->
                         Card(Modifier.width(168.dp), shape = RoundedCornerShape(24.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer), border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant), elevation = CardDefaults.cardElevation(0.dp)) {
                             Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                                 Text(a.name, style = MaterialTheme.typography.labelLarge, maxLines = 1)
@@ -160,7 +160,7 @@ fun HomeScreen(
             Panel {
                 SectionTitle(Icons.Rounded.History, Str.Recent.t()) { TextButton(onClick = { onOpen(Tab.Money) }) { Text(Str.SeeAll.t()) } }
                 if (store.txns.isEmpty()) Text(Str.NothingYet.t(), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                store.txns.take(5).forEach { t -> TxnRow(t, store.accounts) { onEdit(t) } }
+                store.txns.take(5).forEach { t -> TxnRow(t, store.accounts, txnActions(store, t) { onEdit(t) }) { onEdit(t) } }
             }
         }
         val notes = ReleaseNotes.forVersion(APP_VERSION, language)

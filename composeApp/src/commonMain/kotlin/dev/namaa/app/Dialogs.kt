@@ -72,13 +72,7 @@ fun AmountField(value: String, onChange: (String) -> Unit, label: String? = null
 fun DeleteButton(detail: String, onConfirm: () -> Unit) {
     var asking by remember { mutableStateOf(false) }
     TextButton(onClick = { asking = true }) { Text(Str.Delete.t(), color = MaterialTheme.colorScheme.error) }
-    if (asking) AlertDialog(
-        onDismissRequest = { asking = false },
-        title = { Text(Str.ConfirmDeleteTitle.t()) },
-        text = { Text(detail) },
-        confirmButton = { TextButton(onClick = { asking = false; onConfirm() }) { Text(Str.Delete.t(), color = MaterialTheme.colorScheme.error) } },
-        dismissButton = { TextButton(onClick = { asking = false }) { Text(Str.Cancel.t()) } },
-    )
+    if (asking) ConfirmDelete(Str.ConfirmDeleteTitle.t(), detail, { asking = false; onConfirm() }, { asking = false })
 }
 
 val defaultCategories = listOf("Food", "Transport", "Home", "Bills", "Health", "Fun", "Shopping", "Salary", "Other")

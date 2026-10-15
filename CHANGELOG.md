@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- **Long-press menus on every row and card**, from one shared component with a haptic tick: a transaction offers Edit, Duplicate, Split and Delete (asks first); an account offers Edit, History (opens Money filtered to it) and Archive; budgets, repeating rules and debts offer Edit, Delete and, for debts, Record a payment. Archived accounts stay in your totals and history but no longer show in pickers.
+
 - **A side menu and swipe between sections.** Swipe left or right to move between Home, Money, Accounts, Plan and Report (mirrored in Arabic); open the menu with the button or by swiping from the edge on Home. The menu has the sections, Search, Quick add, Settings, What's new, the tour and About. The start section from Settings is honoured, and Reduce animations jumps instead of animating.
 
 - **Settings is a list of sections** (Appearance, Sections and layout, Language, Currency and categories, Data and storage, Privacy and security, About), the same shape as the other Zimam apps.
