@@ -111,6 +111,7 @@ enum class Str(val en: String, val ar: String) {
     CatchUpTitle("Add many transactions?", "إضافة معاملات كثيرة؟"),
     CatchUpBody("This rule starts in the past, so saving it adds {0} transactions at once, dated up to today.", "تبدأ هذه القاعدة في الماضي، لذا سيضيف حفظها {0} معاملة دفعة واحدة بتواريخ حتى اليوم."),
     AddThem("Add them", "أضفها"),
+    SideCopies("These files were kept beside your data and are not shown: {0}", "حُفظت هذه الملفات بجانب بياناتك ولا تظهر: {0}"),
     AmountHint450("Amount, e.g. 450", "المبلغ، مثل 450"),
     AmountHint1250("Amount, e.g. 12.50", "المبلغ، مثل 12.50"),
     AmountHint50("Amount, e.g. 50", "المبلغ، مثل 50"),

@@ -195,6 +195,63 @@ class MoneyBook(
         return fresh.values.sumOf { it.size }
     }
 
+    data class MergeReport(val mergedTransactions: Int, val mergedAccounts: Int)
+
+    private val sideName = Regex("^(\\d{4}) \\(from .+\\)\\.csv$")
+    private val sideAccountsName = Regex("^accounts \\(from .+\\)\\.json$")
+    private val mergedMarker get() = root / ".side-merged"
+
+    private fun mergedSet(): Set<String> = read(mergedMarker)?.lines().orEmpty().filter { it.isNotBlank() }.toSet()
+
+    /**
+     * Year files and accounts that were kept beside the real ones as `name (from X).ext` (for example data written in the
+     * private folder while all-files access was off) are folded in: transactions are united by id, accounts too, the real
+     * file wins on a clash. Each distinct side file is merged once (so a row you delete later does not come back), checked
+     * afterwards, and never deleted or changed.
+     */
+    fun mergeSideCopies(): MergeReport {
+        val done = mergedSet().toMutableSet()
+        var txnCount = 0
+        var accCount = 0
+        val files = fs.listOrNull(root).orEmpty().filter { fs.metadata(it).isRegularFile }
+        for (f in files) {
+            val sum = fs.read(f) { readByteString() }.sha256().hex()
+            val key = "${f.name}\t$sum"
+            if (key in done) continue
+            val year = sideName.matchEntire(f.name)?.groupValues?.get(1)?.toInt()
+            if (year != null) {
+                val rows = Csv.parse(fs.read(f) { readUtf8() }).drop(1)
+                val parsed = rows.map { r -> runCatching { Txn(r[0], LocalDate.parse(r[1]), r[2].toLong(), r[3], r.getOrElse(4) { "" }, r.getOrElse(5) { "" }, r.getOrElse(6) { "" }) }.getOrNull() }
+                if (parsed.any { it == null }) continue // unreadable rows: leave it for the user, reported by unmergedSideCopies
+                val side = parsed.filterNotNull()
+                val mine = transactions(year)
+                val known = mine.map { it.id }.toSet()
+                val extra = side.filter { it.id !in known }
+                if (extra.isNotEmpty()) writeYear(year, mine + extra)
+                if (side.any { s -> transactions(year).none { it.id == s.id } }) continue
+                txnCount += extra.size
+            } else if (sideAccountsName.matches(f.name)) {
+                val side = runCatching { json.decodeFromString(ListSerializer(Account.serializer()), fs.read(f) { readUtf8() }) }.getOrNull() ?: continue
+                if (unreadable("accounts.json") != null) continue
+                val mine = accounts()
+                val extra = side.filter { s -> mine.none { it.id == s.id } }
+                if (extra.isNotEmpty()) saveAccounts(mine + extra)
+                if (side.any { s -> accounts().none { it.id == s.id } }) continue
+                accCount += extra.size
+            } else continue
+            done += key
+        }
+        if (done != mergedSet()) write(mergedMarker, done.sorted().joinToString("\n") + "\n")
+        return MergeReport(txnCount, accCount)
+    }
+
+    /** Files kept beside the real ones as `name (from X).ext` that are not merged (other kinds, or unreadable), so a screen can say where they are. */
+    fun unmergedSideCopies(): List<String> {
+        val done = mergedSet()
+        return fs.listOrNull(root).orEmpty().filter { fs.metadata(it).isRegularFile && it.name.contains(" (from ") && !it.name.endsWith(".part") }
+            .filter { f -> "${f.name}\t${fs.read(f) { readByteString() }.sha256().hex()}" !in done }.map { it.name }.sorted()
+    }
+
     /** Writes the CSV for the given transactions into `exports/` and returns its path. */
     fun export(fileName: String, txns: List<Txn>): Path {
         val path = root / "exports" / fileName
