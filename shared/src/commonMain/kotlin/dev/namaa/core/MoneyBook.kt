@@ -124,10 +124,18 @@ class MoneyBook(
 
     /** Moves [amountMinor] (positive) from one account to another as two legs that always sum to zero, written together; returns the transfer id. */
     fun saveTransfer(date: LocalDate, fromAccount: String, toAccount: String, amountMinor: Long, note: String = ""): String {
+        requireSameCurrency(fromAccount, toAccount)
         val tid = newId()
         val legs = transferLegs(tid, newId(), newId(), date, fromAccount, toAccount, amountMinor, note)
         writeYear(date.year, transactions(date.year) + legs)
         return tid
+    }
+
+    /** Namaa has no exchange rates, so money only moves between accounts of one currency. */
+    private fun requireSameCurrency(a: String, b: String) {
+        val byId = accounts().associateBy { it.id }
+        val x = byId[a]; val y = byId[b]
+        require(x == null || y == null || x.currency.currencyCode() == y.currency.currencyCode()) { "a transfer needs two accounts in the same currency" }
     }
 
     private fun transferLegs(tid: String, outId: String, inId: String, date: LocalDate, from: String, to: String, amountMinor: Long, note: String): List<Txn> {
@@ -137,6 +145,7 @@ class MoneyBook(
 
     /** Changes both legs of transfer [tid] together (ids kept); nothing changes if the values are refused. */
     fun updateTransfer(tid: String, date: LocalDate, fromAccount: String, toAccount: String, amountMinor: Long, note: String) {
+        requireSameCurrency(fromAccount, toAccount)
         val old = allTransactions().filter { it.transferId == tid }
         require(old.size == 2) { "no such transfer" }
         val legs = transferLegs(tid, old.first { it.amountMinor < 0 }.id, old.first { it.amountMinor > 0 }.id, date, fromAccount, toAccount, amountMinor, note)
