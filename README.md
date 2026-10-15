@@ -20,14 +20,14 @@ Namaa (نماء, growth) keeps your accounts and your income and spending in a f
 ## Features
 
 - **Home**: this month's balance, income, spent and left in one card; a donut chart of where the money went; income against spending for the last six months; a card for each account; recent transactions; quick actions to add an expense, an income or a transfer.
-- **Accounts** with their balances. A plain Cash account is there from the first launch; add more or rename them.
+- **Accounts** with their balances. A plain Cash account is there from the first launch; add more or rename them (accounts cannot be deleted yet).
 - **Transfers** between your own accounts: two legs that always sum to zero and never count as income or spending.
 - **Transactions**, newest first: amount, income or spending, account, category (chips or your own words), note and a date picked from a calendar. Tap one to edit or delete it.
 - **Report**: any month, with totals and spending by category.
 - **Plan**: budgets per category with progress bars and a warning at 80% and when you go over; repeating transactions (weekly, monthly); and who owes whom, with partial payments.
 - **Search and export**: filter transactions by text, category, account and dates; export a month or a year to CSV in the `exports` folder.
 - **A first-run tour** (reopen it from Settings) and a one-time *What's new* after each update.
-- **Plain files** in one **Zimam folder**: `accounts.json` and one `<year>.csv` per year, amounts in minor units (cents). Open them in any editor or spreadsheet.
+- **Plain files** in one **Zimam folder**: `accounts.json`, one `<year>.csv` per year (amounts in minor units, cents), `budgets.json`, `recurring.json`, `debts.json`, and `exports/` for CSV exports. Open them in any editor or spreadsheet. If a file ever cannot be read, Namaa keeps a `.corrupt-<time>` copy and never overwrites it.
 
 ## Languages
 
@@ -73,7 +73,9 @@ Namaa keeps its original Android application id (`dev.zimma.money`) and its sign
 
 ## Privacy
 
-No account, no ads, no tracking. Namaa keeps your data on your phone in plain files you can open anywhere, and sends nothing over the network.
+No account, no ads, no tracking. Namaa has no network permission at all: it cannot send anything anywhere. Your data is plain, unencrypted files and there is no app lock yet, so anyone or any app with access to the folder can read them.
+
+Namaa asks for *All files access* (Android 11 and newer) for one reason: to keep the files in the visible `Zimam/Namaa` folder so they survive reinstalling and you can open, copy and back them up with any file manager. Without it the files stay in the app's private storage, which is removed when you uninstall or clear the app's data, so export or copy them first. Android 8 to 10 cannot use the shared folder and always use the private storage.
 
 ## Build
 
