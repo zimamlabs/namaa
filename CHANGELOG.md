@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- The previous product name is gone from the app, the README and the docs. Data from earlier versions is still found and copied.
+
 - **Safer CSV exports.** Text that a spreadsheet would run as a formula (starting with = + - or @) is exported as plain text, and there is a new currency column. Your own year files are not changed.
 
 - **Transfers stay balanced.** Saving a transfer writes both legs in one write. Tapping a transfer opens a transfer editor that changes both legs together (a single leg can no longer be edited alone).
@@ -21,8 +23,8 @@
 
 ## 0.4.0
 
-- **Zimma is now Namaa** (نماء, growth). New name, new icon. The Android application id and the signing key are unchanged, so it installs as an update.
-- **One folder, new name.** Your data is copied into `Zimam/Namaa` from `Zimam/Zimma` and the private folder (checked file by file; nothing is overwritten, a clashing older file is kept beside as `name (from Zimma).ext`; the old folders stay as a backup, and Settings can remove one only after checking again).
+- **A new name: Namaa** (نماء, growth), with a new icon. The Android application id and the signing key are unchanged, so it installs as an update.
+- **One folder, new name.** Your data is copied into `Zimam/Namaa` from the folders earlier versions used (checked file by file; nothing is overwritten, a clashing older file is kept beside as `name (from <old folder>).ext`; the old folders stay as a backup, and Settings can remove one only after checking again).
 - The README no longer carries the brand boards; they live in `branding/boards`.
 
 ## 0.3.0
@@ -38,10 +40,10 @@
 
 - **A professional Home.** The month's balance with income, spent and left; a donut chart of spending by category; income against spending for the last six months; a card per account; recent transactions; quick actions for an expense, an income and a transfer. Bottom navigation for Home, Money, Accounts and Report.
 - **Transfers** between your own accounts. Both legs always sum to zero and are not counted as income or spending; deleting one deletes both.
-- **One Zimam folder.** With All files access your data lives in `Zimam/Zimma` on the phone (`~/Zimam/Zimma` on the desktop). Older folders are copied in and verified by file count, size and SHA-256, and left as a backup; nothing is deleted or overwritten. Settings can remove the old folder after checking again and asking.
+- **One Zimam folder.** With All files access your data lives in one Zimam folder on the phone (and in your home folder on the desktop). Older folders are copied in and verified by file count, size and SHA-256, and left as a backup; nothing is deleted or overwritten. Settings can remove the old folder after checking again and asking.
 - **A calendar date picker** instead of typing a date.
 - **A first-run tour** and a one-time What's new after each update, both reachable again from Settings.
-- **The final Zimma icon** on the launcher (adaptive and themed), the splash and About, and a Settings page with theme and default currency.
+- **The final icon** on the launcher (adaptive and themed), the splash and About, and a Settings page with theme and default currency.
 
 ## 0.1.2
 
@@ -53,4 +55,4 @@
 
 ## 0.1.0
 
-- First release: accounts (a plain Cash account is made on first launch; add and rename more), income and spending with category, note and date, add, edit and delete, this month's income, spent and left, balances per account, and spending by category. Everything is stored as plain files: `accounts.json` and one `<year>.csv` in the `Zimma` folder (the app's private folder on Android, `~/Zimma` on the desktop). Amounts are kept in minor units.
+- First release: accounts (a plain Cash account is made on first launch; add and rename more), income and spending with category, note and date, add, edit and delete, this month's income, spent and left, balances per account, and spending by category. Everything is stored as plain files: `accounts.json` and one `<year>.csv` in the app's data folder. Amounts are kept in minor units.

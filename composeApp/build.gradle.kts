@@ -64,7 +64,7 @@ android {
             if (store != null) {
                 storeFile = file(store)
                 storePassword = System.getenv("NAMAA_KEYSTORE_PASSWORD")
-                keyAlias = System.getenv("NAMAA_KEY_ALIAS") ?: "zimma"
+                keyAlias = System.getenv("NAMAA_KEY_ALIAS") ?: "zimma" // the key alias of the existing release key; renaming it would break updates
                 keyPassword = System.getenv("NAMAA_KEYSTORE_PASSWORD")
             }
         }
