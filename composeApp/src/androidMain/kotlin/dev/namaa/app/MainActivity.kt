@@ -13,7 +13,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import dev.namaa.core.DataLocation
 import dev.namaa.core.LegacyNames
 import dev.namaa.core.MoneyBook
-import dev.namaa.core.PrefsFile
+import dev.namaa.core.SettingsRepository
 import okio.FileSystem
 import okio.Path.Companion.toOkioPath
 
@@ -52,7 +52,7 @@ class MainActivity : ComponentActivity() {
             val intent = Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION, Uri.parse("package:$packageName"))
             runCatching { startActivity(intent) }.onFailure { startActivity(Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION)) }
         }) else null
-        store = NamaaStore(MoneyBook(FileSystem.SYSTEM, location.root), PrefsFile(FileSystem.SYSTEM, filesDir.resolve("prefs.json").toOkioPath()), location, ask, files)
+        store = NamaaStore(MoneyBook(FileSystem.SYSTEM, location.root), SettingsRepository(FileSystem.SYSTEM, filesDir.resolve("prefs.json").toOkioPath()), location, ask, files)
         setContent { NamaaApp(store) }
     }
 

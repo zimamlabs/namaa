@@ -104,9 +104,9 @@ fun PlanScreen(store: NamaaStore, padding: PaddingValues, section: PlanSection, 
         LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 4.dp, bottom = 96.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             when (section) {
                 PlanSection.Budgets -> {
-                    val statuses = budgetStatusesIn(store.budgets, store.accounts, store.txns, today.year, today.monthNumber, store.prefs.currency)
+                    val statuses = budgetStatusesIn(store.budgets, store.accounts, store.txns, today.year, today.monthNumber, store.settings.currency)
                     if (statuses.isEmpty()) item { EmptyHint(Str.NoBudgetsTitle.t(), Str.NoBudgetsBody.t()) }
-                    items(statuses, key = { it.budget.category + "|" + it.budget.currency }) { st -> Panel(Modifier.clickable { edit = PlanEdit.BudgetEdit(st.budget) }) { BudgetBar(st, if (store.currencies.size > 1) st.budget.currency.ifBlank { store.prefs.currency }.currencyCode() else "") } }
+                    items(statuses, key = { it.budget.category + "|" + it.budget.currency }) { st -> Panel(Modifier.clickable { edit = PlanEdit.BudgetEdit(st.budget) }) { BudgetBar(st, if (store.currencies.size > 1) st.budget.currency.ifBlank { store.settings.currency }.currencyCode() else "") } }
                 }
                 PlanSection.Repeating -> {
                     if (store.recurring.isEmpty()) item { EmptyHint(Str.NoRepeatTitle.t(), Str.NoRepeatBody.t()) }
@@ -123,7 +123,7 @@ fun PlanScreen(store: NamaaStore, padding: PaddingValues, section: PlanSection, 
                     }
                 }
                 PlanSection.Owed -> {
-                    val totals = debtTotalsByCurrency(store.debts, store.prefs.currency)
+                    val totals = debtTotalsByCurrency(store.debts, store.settings.currency)
                     val withCode = totals.size > 1
                     if (store.debts.isNotEmpty()) item {
                         Panel {
@@ -133,7 +133,7 @@ fun PlanScreen(store: NamaaStore, padding: PaddingValues, section: PlanSection, 
                                     Column(horizontalAlignment = Alignment.End) { Text(Str.YouOwe.t(), style = MaterialTheme.typography.labelMedium); Text((money(t.iOweMinor) + if (withCode) " $code" else ""), style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.error) }
                                 }
                             }
-                            balanceByPersonAndCurrency(store.debts, store.prefs.currency).forEach { (person, code, net) ->
+                            balanceByPersonAndCurrency(store.debts, store.settings.currency).forEach { (person, code, net) ->
                                 val shown = money(kotlin.math.abs(net)) + if (withCode) " $code" else ""
                                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                                     Text(person, style = MaterialTheme.typography.bodyMedium)
@@ -160,13 +160,13 @@ fun PlanScreen(store: NamaaStore, padding: PaddingValues, section: PlanSection, 
         }
     }
     when (val e = edit) {
-        is PlanEdit.BudgetEdit -> BudgetDialog(e.budget, store.prefs.currency, onDismiss = { edit = null }, onDelete = e.budget?.let { b -> { store.saveBudgets(store.budgets.filter { it.category != b.category }); edit = null } }) { saved ->
+        is PlanEdit.BudgetEdit -> BudgetDialog(e.budget, store.settings.currency, onDismiss = { edit = null }, onDelete = e.budget?.let { b -> { store.saveBudgets(store.budgets.filter { it.category != b.category }); edit = null } }) { saved ->
             store.saveBudgets(store.budgets.filter { it.category != e.budget?.category && it.category != saved.category } + saved); edit = null
         }
         is PlanEdit.RecurringEdit -> RecurringDialog(e.rule, store, today, onDismiss = { edit = null }, onDelete = e.rule?.let { r -> { store.saveRecurring(store.recurring.filter { it.id != r.id }); edit = null } }) { saved ->
             store.saveRecurring(if (e.rule == null) store.recurring + saved else store.recurring.map { if (it.id == saved.id) saved else it }); edit = null
         }
-        is PlanEdit.DebtEdit -> DebtDialog(e.debt, store.prefs.currency, today, onDismiss = { edit = null }, onDelete = e.debt?.let { d -> { store.saveDebts(store.debts.filter { it.id != d.id }); edit = null } }) { saved ->
+        is PlanEdit.DebtEdit -> DebtDialog(e.debt, store.settings.currency, today, onDismiss = { edit = null }, onDelete = e.debt?.let { d -> { store.saveDebts(store.debts.filter { it.id != d.id }); edit = null } }) { saved ->
             store.saveDebts(if (e.debt == null) store.debts + saved else store.debts.map { if (it.id == saved.id) saved else it }); edit = null
         }
         is PlanEdit.PayDebt -> PaymentDialog(e.debt, today, onDismiss = { edit = null }) { paid -> store.saveDebts(store.debts.map { if (it.id == paid.id) paid else it }); edit = null }

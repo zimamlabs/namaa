@@ -48,14 +48,14 @@ fun SettingsScreen(store: NamaaStore, onBack: () -> Unit, onAbout: () -> Unit, o
                 Text(Str.Look.t(), style = MaterialTheme.typography.titleSmall)
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     listOf("system" to Str.ThemeSystem, "light" to Str.ThemeLight, "dark" to Str.ThemeDark).forEach { (key, label) ->
-                        FilterChip(store.prefs.theme == key, { store.updatePrefs { it.copy(theme = key) } }, { Text(label.t()) })
+                        FilterChip(store.settings.themeMode == key, { store.updateSettings { it.copy(themeMode = key) } }, { Text(label.t()) })
                     }
                 }
                 Text(Str.LanguageTitle.t(), style = MaterialTheme.typography.titleSmall)
                 LanguageChips(store)
                 Text(Str.DefaultCurrency.t(), style = MaterialTheme.typography.titleSmall)
-                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) { currencies.take(3).forEach { c -> FilterChip(store.prefs.currency == c, { store.setCurrency(c) }, { Text(c) }) } }
-                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) { currencies.drop(3).forEach { c -> FilterChip(store.prefs.currency == c, { store.setCurrency(c) }, { Text(c) }) } }
+                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) { currencies.take(3).forEach { c -> FilterChip(store.settings.currency == c, { store.setCurrency(c) }, { Text(c) }) } }
+                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) { currencies.drop(3).forEach { c -> FilterChip(store.settings.currency == c, { store.setCurrency(c) }, { Text(c) }) } }
             }
             Panel {
                 Text(Str.ZimamFolderTitle.t(), style = MaterialTheme.typography.titleSmall)
@@ -97,12 +97,12 @@ fun SettingsScreen(store: NamaaStore, onBack: () -> Unit, onAbout: () -> Unit, o
 fun LanguageChips(store: NamaaStore) {
     androidx.compose.foundation.layout.FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         listOf("system" to Str.ThemeSystem.t(), "en" to Str.LangEnglish.t(), "ar" to Str.LangArabic.t()).forEach { (k, v) ->
-            FilterChip(store.prefs.lang == k, { store.updatePrefs { it.copy(lang = k) } }, { Text(v) })
+            FilterChip(store.settings.lang == k, { store.updateSettings { it.copy(lang = k) } }, { Text(v) })
         }
     }
     Text(Str.DigitsTitle.t(), style = MaterialTheme.typography.labelLarge)
     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        FilterChip(!store.prefs.arabicDigits, { store.updatePrefs { it.copy(arabicDigits = false) } }, { Text(Str.DigitsWestern.text(dev.namaa.core.Lang.En)) })
-        FilterChip(store.prefs.arabicDigits, { store.updatePrefs { it.copy(arabicDigits = true) } }, { Text(Str.DigitsArabic.text(dev.namaa.core.Lang.En)) })
+        FilterChip(!store.settings.arabicDigits, { store.updateSettings { it.copy(arabicDigits = false) } }, { Text(Str.DigitsWestern.text(dev.namaa.core.Lang.En)) })
+        FilterChip(store.settings.arabicDigits, { store.updateSettings { it.copy(arabicDigits = true) } }, { Text(Str.DigitsArabic.text(dev.namaa.core.Lang.En)) })
     }
 }

@@ -120,12 +120,12 @@ fun HomeScreen(
                 QuickAction(Icons.Rounded.SwapHoriz, Str.QuickTransfer.t(), Modifier.weight(1f), onTransfer)
             }
         }
-        val budgetStatus = budgetStatusesIn(store.budgets, store.accounts, store.txns, today.year, today.monthNumber, store.prefs.currency)
+        val budgetStatus = budgetStatusesIn(store.budgets, store.accounts, store.txns, today.year, today.monthNumber, store.settings.currency)
         if (budgetStatus.isNotEmpty()) item {
             Panel {
                 val warn = budgetStatus.count { it.state != BudgetState.Ok }
                 SectionTitle(Icons.Rounded.Savings, if (warn > 0) Str.BudgetsAttention.t(warn) else Str.Budgets.t()) { TextButton(onClick = { onOpen(Tab.Plan) }) { Text(Str.TabPlan.t()) } }
-                budgetStatus.take(3).forEach { BudgetBar(it, if (store.currencies.size > 1) it.budget.currency.ifBlank { store.prefs.currency }.currencyCode() else "") }
+                budgetStatus.take(3).forEach { BudgetBar(it, if (store.currencies.size > 1) it.budget.currency.ifBlank { store.settings.currency }.currencyCode() else "") }
             }
         }
         if (month.byCategory.isNotEmpty()) item {

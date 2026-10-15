@@ -13,8 +13,8 @@ import dev.namaa.core.Recurring
 import dev.namaa.core.DataLocation
 import dev.namaa.core.DataProblem
 import dev.namaa.core.MoneyBook
-import dev.namaa.core.Prefs
-import dev.namaa.core.PrefsFile
+import dev.namaa.core.Settings
+import dev.namaa.core.SettingsRepository
 import dev.namaa.core.Txn
 import dev.namaa.core.currenciesOf
 import dev.namaa.core.currencyCode
@@ -23,7 +23,7 @@ import dev.namaa.core.newId
 import kotlinx.datetime.LocalDate
 
 /** [askAccess] opens the system screen that grants access to the shared Zimam folder; null where there is no such step. */
-class NamaaStore(book: MoneyBook, private val prefsFile: PrefsFile, val location: DataLocation, val askAccess: (() -> Unit)? = null, val files: FileActions? = null) {
+class NamaaStore(book: MoneyBook, private val settingsRepository: SettingsRepository, val location: DataLocation, val askAccess: (() -> Unit)? = null, val files: FileActions? = null) {
     var book by mutableStateOf(book)
         private set
     var accounts by mutableStateOf(emptyList<Account>())
@@ -38,7 +38,7 @@ class NamaaStore(book: MoneyBook, private val prefsFile: PrefsFile, val location
         private set
     var debts by mutableStateOf(emptyList<Debt>())
         private set
-    var prefs by mutableStateOf(prefsFile.load())
+    var settings by mutableStateOf(settingsRepository.current)
         private set
     var tourRequested by mutableStateOf(false)
     /** Bumps when the data folder changes, so the folder section can look again. */
@@ -62,12 +62,12 @@ class NamaaStore(book: MoneyBook, private val prefsFile: PrefsFile, val location
 
     // First launch: a plain Cash account so nothing needs setting up.
     // Only when there is no accounts file at all: an existing file that fails to read is never replaced.
-    private fun ensureCash() { if (!book.hasAccountsFile()) book.saveAccounts(listOf(Account(newId(), "Cash", prefs.currency))) }
+    private fun ensureCash() { if (!book.hasAccountsFile()) book.saveAccounts(listOf(Account(newId(), "Cash", settings.currency))) }
 
     /** The currency the month figures and charts show when the accounts use more than one; never added together. */
     var shownCurrency by mutableStateOf("")
     val currencies: List<String> get() = currenciesOf(accounts)
-    val activeCurrency: String get() = currencies.let { c -> shownCurrency.takeIf { it in c } ?: prefs.currency.currencyCode().takeIf { it in c } ?: c.firstOrNull() ?: prefs.currency.currencyCode() }
+    val activeCurrency: String get() = currencies.let { c -> shownCurrency.takeIf { it in c } ?: settings.currency.currencyCode().takeIf { it in c } ?: c.firstOrNull() ?: settings.currency.currencyCode() }
     /** The transactions of [activeCurrency] (all of them when there is only one currency). */
     val activeTxns: List<Txn> get() = if (currencies.size <= 1) txns else txnsInCurrency(txns, accounts, activeCurrency)
 
@@ -127,10 +127,10 @@ class NamaaStore(book: MoneyBook, private val prefsFile: PrefsFile, val location
 
     fun useBook(newBook: MoneyBook) { book = newBook; ensureCash(); reload(); folderTick++ }
 
-    fun updatePrefs(change: (Prefs) -> Prefs) { prefs = change(prefs); prefsFile.save(prefs) }
+    fun updateSettings(change: (Settings) -> Settings) { settings = settingsRepository.update(change) }
 
     fun setCurrency(code: String) {
-        updatePrefs { it.copy(currency = code) }
+        updateSettings { it.copy(currency = code) }
         if (accounts.size == 1 && txns.isEmpty()) saveAccounts(listOf(accounts[0].copy(currency = code)))
     }
 
