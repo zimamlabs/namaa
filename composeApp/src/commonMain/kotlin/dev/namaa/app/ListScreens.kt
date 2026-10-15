@@ -35,6 +35,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -56,6 +57,7 @@ fun TransactionsScreen(store: NamaaStore, padding: PaddingValues, onEdit: (Txn) 
     var filter by remember { mutableStateOf(TxnFilter()) }
     var open by remember { mutableStateOf(false) }
     val shown = remember(store.txns, filter) { filterTxns(store.txns, filter) }
+    LaunchedEffect(store.historyAccount) { store.historyAccount?.let { filter = TxnFilter(accountId = it); open = true; store.historyAccount = null } }
     val categories = remember(store.txns) { store.txns.map { it.category.ifEmpty { "Other" } }.distinct().sorted() }
     LazyColumn(Modifier.fillMaxSize().padding(padding), contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 96.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
         item {
@@ -80,15 +82,15 @@ fun TransactionsScreen(store: NamaaStore, padding: PaddingValues, onEdit: (Txn) 
         }
         if (store.txns.isEmpty()) item { EmptyHint(Str.NoTxnTitle.t(), "Tap + to add one. They are saved per year in <year>.csv.") }
         else if (shown.isEmpty()) item { EmptyHint(Str.NothingMatches.t(), Str.TryFewer.t()) }
-        items(shown.take(500), key = { it.id }) { t -> TxnRow(t, store.accounts) { onEdit(t) } }
+        items(shown.take(500), key = { it.id }) { t -> TxnRow(t, store.accounts, txnActions(store, t) { onEdit(t) }) { onEdit(t) } }
     }
 }
 
 @Composable
-fun AccountsScreen(store: NamaaStore, padding: PaddingValues, onEdit: (Account) -> Unit) {
+fun AccountsScreen(store: NamaaStore, padding: PaddingValues, onEdit: (Account) -> Unit, onHistory: (String) -> Unit) {
     LazyColumn(Modifier.fillMaxSize().padding(padding), contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 96.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        items(store.accounts, key = { it.id }) { a ->
-            Panel(Modifier.clickable { onEdit(a) }) {
+        items(store.accounts.sortedBy { it.archived }, key = { it.id }) { a ->
+            ContextMenuBox(accountActions(store, a, { onEdit(a) }) { onHistory(a.id) }, { onEdit(a) }) { Panel {
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                     Column {
                         Text(a.name, style = MaterialTheme.typography.titleMedium)
@@ -96,7 +98,7 @@ fun AccountsScreen(store: NamaaStore, padding: PaddingValues, onEdit: (Account) 
                     }
                     Text(money(balance(a, store.txns)), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
                 }
-            }
+            } }
         }
     }
 }

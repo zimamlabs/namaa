@@ -106,12 +106,12 @@ fun PlanScreen(store: NamaaStore, padding: PaddingValues, section: PlanSection, 
                 PlanSection.Budgets -> {
                     val statuses = budgetStatusesIn(store.budgets, store.accounts, store.txns, today.year, today.monthNumber, store.settings.currency)
                     if (statuses.isEmpty()) item { EmptyHint(Str.NoBudgetsTitle.t(), Str.NoBudgetsBody.t()) }
-                    items(statuses, key = { it.budget.category + "|" + it.budget.currency }) { st -> Panel(Modifier.clickable { edit = PlanEdit.BudgetEdit(st.budget) }) { BudgetBar(st, if (store.currencies.size > 1) st.budget.currency.ifBlank { store.settings.currency }.currencyCode() else "") } }
+                    items(statuses, key = { it.budget.category + "|" + it.budget.currency }) { st -> ContextMenuBox(budgetActions(store, st.budget) { edit = PlanEdit.BudgetEdit(st.budget) }, { edit = PlanEdit.BudgetEdit(st.budget) }) { Panel { BudgetBar(st, if (store.currencies.size > 1) st.budget.currency.ifBlank { store.settings.currency }.currencyCode() else "") } } }
                 }
                 PlanSection.Repeating -> {
                     if (store.recurring.isEmpty()) item { EmptyHint(Str.NoRepeatTitle.t(), Str.NoRepeatBody.t()) }
                     items(store.recurring, key = { it.id }) { r ->
-                        Panel(Modifier.clickable { edit = PlanEdit.RecurringEdit(r) }) {
+                        ContextMenuBox(recurringActions(store, r) { edit = PlanEdit.RecurringEdit(r) }, { edit = PlanEdit.RecurringEdit(r) }) { Panel {
                             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                                 Column(Modifier.weight(1f)) {
                                     Text(categoryShown(r.category) + if (r.note.isNotBlank()) "  ·  ${r.note}" else "", style = MaterialTheme.typography.titleSmall)
@@ -119,7 +119,7 @@ fun PlanScreen(store: NamaaStore, padding: PaddingValues, section: PlanSection, 
                                 }
                                 Text(money(r.amountMinor), style = MaterialTheme.typography.titleMedium)
                             }
-                        }
+                        } }
                     }
                 }
                 PlanSection.Owed -> {
@@ -144,7 +144,7 @@ fun PlanScreen(store: NamaaStore, padding: PaddingValues, section: PlanSection, 
                     }
                     if (store.debts.isEmpty()) item { EmptyHint(Str.NoDebtsTitle.t(), Str.NoDebtsBody.t()) }
                     items(store.debts, key = { it.id }) { debt ->
-                        Panel(Modifier.clickable { edit = PlanEdit.DebtEdit(debt) }) {
+                        ContextMenuBox(debtActions(store, debt, { edit = PlanEdit.DebtEdit(debt) }, { edit = PlanEdit.PayDebt(debt) }), { edit = PlanEdit.DebtEdit(debt) }) { Panel {
                             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                                 Column(Modifier.weight(1f)) {
                                     Text(debt.person, style = MaterialTheme.typography.titleSmall)
@@ -153,7 +153,7 @@ fun PlanScreen(store: NamaaStore, padding: PaddingValues, section: PlanSection, 
                                 Text(if (debt.settled) Str.Settled.t() else Str.LeftAmount.t(money(debt.remainingMinor)), style = MaterialTheme.typography.titleSmall)
                             }
                             if (!debt.settled) TextButton(onClick = { edit = PlanEdit.PayDebt(debt) }) { Text(if (debt.direction == Direction.TheyOweMe) Str.PayReceived.t() else Str.PayMade.t()) }
-                        }
+                        } }
                     }
                 }
             }

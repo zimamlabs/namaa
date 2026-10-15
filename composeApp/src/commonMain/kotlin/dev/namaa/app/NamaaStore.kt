@@ -116,6 +116,19 @@ class NamaaStore(book: MoneyBook, private val settingsRepository: SettingsReposi
         return (book.root / "cleared-$stamp").toString()
     }
 
+    /** The transaction being split, and the account whose history was asked for; the screens act on these. */
+    var splitting by mutableStateOf<Txn?>(null)
+    var historyAccount by mutableStateOf<String?>(null)
+
+    fun duplicateTxn(id: String) { book.duplicateTransaction(id); txns = book.allTransactions() }
+
+    fun splitTxn(id: String, firstMinor: Long, category: String) { book.splitTransaction(id, firstMinor, category); txns = book.allTransactions() }
+
+    fun setArchived(accountId: String, archived: Boolean) = saveAccounts(accounts.map { if (it.id == accountId) it.copy(archived = archived) else it })
+
+    /** The accounts new entries can go to. */
+    val activeAccounts: List<Account> get() = accounts.filter { !it.archived }
+
     /** A whole-folder backup, checked by reading it back, handed to the system "save as" screen. */
     fun backupEverything(onDone: (Boolean) -> Unit) {
         val actions = files ?: return onDone(false)
