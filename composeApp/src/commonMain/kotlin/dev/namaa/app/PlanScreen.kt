@@ -48,7 +48,10 @@ import dev.namaa.core.Frequency
 import dev.namaa.core.Payment
 import dev.namaa.core.Recurring
 import dev.namaa.core.balanceByPerson
-import dev.namaa.core.budgetStatuses
+import dev.namaa.core.balanceByPersonAndCurrency
+import dev.namaa.core.budgetStatusesIn
+import dev.namaa.core.currencyCode
+import dev.namaa.core.debtTotalsByCurrency
 import dev.namaa.core.debtTotals
 import dev.namaa.core.formatMoney
 import dev.namaa.core.newId
@@ -60,7 +63,7 @@ import kotlinx.datetime.LocalDate
 enum class PlanSection(val label: Str) { Budgets(Str.SecBudgets), Repeating(Str.SecRepeating), Owed(Str.SecOwed) }
 
 @Composable
-fun BudgetBar(status: BudgetStatus) {
+fun BudgetBar(status: BudgetStatus, currency: String = "") {
     val colour = when (status.state) { BudgetState.Ok -> MaterialTheme.colorScheme.primary; BudgetState.Near -> MaterialTheme.colorScheme.tertiary; BudgetState.Over -> MaterialTheme.colorScheme.error }
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
@@ -68,7 +71,7 @@ fun BudgetBar(status: BudgetStatus) {
                 if (status.state != BudgetState.Ok) Icon(Icons.Rounded.Warning, null, tint = colour, modifier = Modifier.height(16.dp))
                 Text(categoryShown(status.budget.category), style = MaterialTheme.typography.bodyLarge)
             }
-            Text(Str.AmountOf.t(money(status.spentMinor), money(status.budget.limitMinor)), style = MaterialTheme.typography.labelLarge, color = colour)
+            Text(Str.AmountOf.t(money(status.spentMinor), (money(status.budget.limitMinor) + " " + currency).trim()), style = MaterialTheme.typography.labelLarge, color = colour)
         }
         Box(Modifier.fillMaxWidth().height(8.dp).clip(RoundedCornerShape(4.dp)).background(MaterialTheme.colorScheme.surfaceContainerHigh)) {
             Box(Modifier.fillMaxWidth(status.fraction.coerceIn(0.02f, 1f)).height(8.dp).clip(RoundedCornerShape(4.dp)).background(colour))
@@ -101,9 +104,9 @@ fun PlanScreen(store: NamaaStore, padding: PaddingValues, section: PlanSection, 
         LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 4.dp, bottom = 96.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             when (section) {
                 PlanSection.Budgets -> {
-                    val statuses = budgetStatuses(store.budgets, store.txns, today.year, today.monthNumber)
+                    val statuses = budgetStatusesIn(store.budgets, store.accounts, store.txns, today.year, today.monthNumber, store.prefs.currency)
                     if (statuses.isEmpty()) item { EmptyHint(Str.NoBudgetsTitle.t(), Str.NoBudgetsBody.t()) }
-                    items(statuses, key = { it.budget.category }) { st -> Panel(Modifier.clickable { edit = PlanEdit.BudgetEdit(st.budget) }) { BudgetBar(st) } }
+                    items(statuses, key = { it.budget.category + "|" + it.budget.currency }) { st -> Panel(Modifier.clickable { edit = PlanEdit.BudgetEdit(st.budget) }) { BudgetBar(st, if (store.currencies.size > 1) st.budget.currency.ifBlank { store.prefs.currency }.currencyCode() else "") } }
                 }
                 PlanSection.Repeating -> {
                     if (store.recurring.isEmpty()) item { EmptyHint(Str.NoRepeatTitle.t(), Str.NoRepeatBody.t()) }
@@ -120,17 +123,21 @@ fun PlanScreen(store: NamaaStore, padding: PaddingValues, section: PlanSection, 
                     }
                 }
                 PlanSection.Owed -> {
-                    val totals = debtTotals(store.debts)
-                    item {
+                    val totals = debtTotalsByCurrency(store.debts, store.prefs.currency)
+                    val withCode = totals.size > 1
+                    if (store.debts.isNotEmpty()) item {
                         Panel {
-                            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                                Column { Text(Str.TheyOweYou.t(), style = MaterialTheme.typography.labelMedium); Text(money(totals.owedToMeMinor), style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.secondary) }
-                                Column(horizontalAlignment = Alignment.End) { Text(Str.YouOwe.t(), style = MaterialTheme.typography.labelMedium); Text(money(totals.iOweMinor), style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.error) }
+                            totals.forEach { (code, t) ->
+                                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                    Column { Text(Str.TheyOweYou.t(), style = MaterialTheme.typography.labelMedium); Text((money(t.owedToMeMinor) + if (withCode) " $code" else ""), style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.secondary) }
+                                    Column(horizontalAlignment = Alignment.End) { Text(Str.YouOwe.t(), style = MaterialTheme.typography.labelMedium); Text((money(t.iOweMinor) + if (withCode) " $code" else ""), style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.error) }
+                                }
                             }
-                            balanceByPerson(store.debts).forEach { (person, net) ->
+                            balanceByPersonAndCurrency(store.debts, store.prefs.currency).forEach { (person, code, net) ->
+                                val shown = money(kotlin.math.abs(net)) + if (withCode) " $code" else ""
                                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                                     Text(person, style = MaterialTheme.typography.bodyMedium)
-                                    Text(if (net > 0) Str.OwesYou.t(money(net)) else Str.YouOweAmt.t(money(-net)), style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
+                                    Text(if (net > 0) Str.OwesYou.t(shown) else Str.YouOweAmt.t(shown), style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
                                 }
                             }
                         }
@@ -153,13 +160,13 @@ fun PlanScreen(store: NamaaStore, padding: PaddingValues, section: PlanSection, 
         }
     }
     when (val e = edit) {
-        is PlanEdit.BudgetEdit -> BudgetDialog(e.budget, onDismiss = { edit = null }, onDelete = e.budget?.let { b -> { store.saveBudgets(store.budgets.filter { it.category != b.category }); edit = null } }) { saved ->
+        is PlanEdit.BudgetEdit -> BudgetDialog(e.budget, store.prefs.currency, onDismiss = { edit = null }, onDelete = e.budget?.let { b -> { store.saveBudgets(store.budgets.filter { it.category != b.category }); edit = null } }) { saved ->
             store.saveBudgets(store.budgets.filter { it.category != e.budget?.category && it.category != saved.category } + saved); edit = null
         }
         is PlanEdit.RecurringEdit -> RecurringDialog(e.rule, store, today, onDismiss = { edit = null }, onDelete = e.rule?.let { r -> { store.saveRecurring(store.recurring.filter { it.id != r.id }); edit = null } }) { saved ->
             store.saveRecurring(if (e.rule == null) store.recurring + saved else store.recurring.map { if (it.id == saved.id) saved else it }); edit = null
         }
-        is PlanEdit.DebtEdit -> DebtDialog(e.debt, today, onDismiss = { edit = null }, onDelete = e.debt?.let { d -> { store.saveDebts(store.debts.filter { it.id != d.id }); edit = null } }) { saved ->
+        is PlanEdit.DebtEdit -> DebtDialog(e.debt, store.prefs.currency, today, onDismiss = { edit = null }, onDelete = e.debt?.let { d -> { store.saveDebts(store.debts.filter { it.id != d.id }); edit = null } }) { saved ->
             store.saveDebts(if (e.debt == null) store.debts + saved else store.debts.map { if (it.id == saved.id) saved else it }); edit = null
         }
         is PlanEdit.PayDebt -> PaymentDialog(e.debt, today, onDismiss = { edit = null }) { paid -> store.saveDebts(store.debts.map { if (it.id == paid.id) paid else it }); edit = null }
@@ -168,7 +175,7 @@ fun PlanScreen(store: NamaaStore, padding: PaddingValues, section: PlanSection, 
 }
 
 @Composable
-private fun BudgetDialog(existing: Budget?, onDismiss: () -> Unit, onDelete: (() -> Unit)?, onSave: (Budget) -> Unit) {
+private fun BudgetDialog(existing: Budget?, defaultCurrency: String, onDismiss: () -> Unit, onDelete: (() -> Unit)?, onSave: (Budget) -> Unit) {
     var category by remember { mutableStateOf(existing?.category ?: "Food") }
     var limit by remember { mutableStateOf(existing?.let { formatMoney(it.limitMinor) } ?: "") }
     val minor = parseMoney(limit)?.takeIf { it > 0 }
@@ -181,7 +188,7 @@ private fun BudgetDialog(existing: Budget?, onDismiss: () -> Unit, onDelete: (()
                 AmountField(limit, { limit = it }, label = Str.LimitPerMonth.t())
             }
         },
-        confirmButton = { TextButton(enabled = category.isNotBlank() && minor != null, onClick = { onSave(Budget(category.trim(), minor!!)) }) { Text(Str.Save.t()) } },
+        confirmButton = { TextButton(enabled = category.isNotBlank() && minor != null, onClick = { onSave(Budget(category.trim(), minor!!, existing?.currency ?: defaultCurrency)) }) { Text(Str.Save.t()) } },
         dismissButton = { Row { onDelete?.let { DeleteButton(Str.DeleteBudgetDetail.t(), it) }; TextButton(onClick = onDismiss) { Text(Str.Cancel.t()) } } },
     )
 }
@@ -231,7 +238,7 @@ private fun RecurringDialog(existing: Recurring?, store: NamaaStore, today: Loca
 }
 
 @Composable
-private fun DebtDialog(existing: Debt?, today: LocalDate, onDismiss: () -> Unit, onDelete: (() -> Unit)?, onSave: (Debt) -> Unit) {
+private fun DebtDialog(existing: Debt?, defaultCurrency: String, today: LocalDate, onDismiss: () -> Unit, onDelete: (() -> Unit)?, onSave: (Debt) -> Unit) {
     var person by remember { mutableStateOf(existing?.person ?: "") }
     var direction by remember { mutableStateOf(existing?.direction ?: Direction.TheyOweMe) }
     var amount by remember { mutableStateOf(existing?.let { formatMoney(it.principalMinor) } ?: "") }
@@ -250,7 +257,7 @@ private fun DebtDialog(existing: Debt?, today: LocalDate, onDismiss: () -> Unit,
                 if (existing != null && existing.payments.isNotEmpty()) Text(Str.PaymentsSoFar.t(existing.payments.joinToString { formatMoney(it.amountMinor) }), style = MaterialTheme.typography.labelMedium)
             }
         },
-        confirmButton = { TextButton(enabled = person.isNotBlank() && minor != null, onClick = { onSave(Debt(existing?.id ?: newId(), person.trim(), direction, minor!!, date, note.trim(), existing?.payments.orEmpty())) }) { Text(Str.Save.t()) } },
+        confirmButton = { TextButton(enabled = person.isNotBlank() && minor != null, onClick = { onSave(Debt(existing?.id ?: newId(), person.trim(), direction, minor!!, date, note.trim(), existing?.payments.orEmpty(), existing?.currency ?: defaultCurrency)) }) { Text(Str.Save.t()) } },
         dismissButton = { Row { onDelete?.let { DeleteButton(Str.DeleteDebtDetail.t(existing?.payments?.size ?: 0), it) }; TextButton(onClick = onDismiss) { Text(Str.Cancel.t()) } } },
     )
 }

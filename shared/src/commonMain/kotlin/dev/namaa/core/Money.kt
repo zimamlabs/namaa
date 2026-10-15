@@ -16,6 +16,22 @@ fun monthSummary(txns: List<Txn>, year: Int, month: Int): MonthSummary {
     )
 }
 
+/** "usd " and "USD" are the same currency. */
+fun String.currencyCode(): String = trim().uppercase()
+
+/** The currencies of [accounts], each once, in order of first appearance. */
+fun currenciesOf(accounts: List<Account>): List<String> = accounts.map { it.currency.currencyCode() }.distinct()
+
+/** The transactions that belong to accounts in [currency]. */
+fun txnsInCurrency(txns: List<Txn>, accounts: List<Account>, currency: String): List<Txn> {
+    val ids = accounts.filter { it.currency.currencyCode() == currency.currencyCode() }.map { it.id }.toSet()
+    return txns.filter { it.accountId in ids }
+}
+
+/** What the accounts hold, one total per currency; different currencies are never added together. */
+fun balancesByCurrency(accounts: List<Account>, txns: List<Txn>): List<Pair<String, Long>> =
+    accounts.groupBy { it.currency.currencyCode() }.map { (c, list) -> c to list.sumOf { balance(it, txns) } }
+
 fun balance(account: Account, txns: List<Txn>): Long = account.openingMinor + txns.filter { it.accountId == account.id }.sumOf { it.amountMinor }
 
 /** "12.50" for 1250, with a minus sign for negatives. */

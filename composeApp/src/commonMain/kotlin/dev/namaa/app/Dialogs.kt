@@ -32,6 +32,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import dev.namaa.core.Account
 import dev.namaa.core.Txn
+import dev.namaa.core.currencyCode
 import dev.namaa.core.formatMoney
 import dev.namaa.core.newId
 import dev.namaa.core.MoneyParse
@@ -159,12 +160,14 @@ fun TransferDialog(accounts: List<Account>, today: LocalDate, existing: List<Txn
     var note by remember { mutableStateOf(out?.note ?: "") }
     var date by remember { mutableStateOf(out?.date ?: today) }
     val minor = parseMoney(amount)?.takeIf { it > 0 }
+    val sameCurrency = accounts.firstOrNull { it.id == from }?.currency?.currencyCode() == accounts.firstOrNull { it.id == to }?.currency?.currencyCode()
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(if (existing == null) Str.TransferTitle.t() else Str.EditTransfer.t()) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 if (accounts.size < 2) Text(Str.AddSecondAccount.t(), color = MaterialTheme.colorScheme.error)
+                if (!sameCurrency) Text(Str.TransferCurrencyMismatch.t(), color = MaterialTheme.colorScheme.error)
                 Text(Str.From.t(), style = MaterialTheme.typography.labelMedium)
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) { items(accounts, key = { it.id }) { a -> FilterChip(from == a.id, { from = a.id }, { Text(a.name) }) } }
                 Text(Str.To.t(), style = MaterialTheme.typography.labelMedium)
@@ -174,7 +177,7 @@ fun TransferDialog(accounts: List<Account>, today: LocalDate, existing: List<Txn
                 DateField(date) { date = it }
             }
         },
-        confirmButton = { TextButton(enabled = minor != null && from != to, onClick = { onSave(from, to, minor!!, date, note.trim()) }) { Text(Str.Move.t()) } },
+        confirmButton = { TextButton(enabled = minor != null && from != to && sameCurrency, onClick = { onSave(from, to, minor!!, date, note.trim()) }) { Text(Str.Move.t()) } },
         dismissButton = { Row { onDelete?.let { DeleteButton(Str.DeleteTransferDetail.t(), it) }; TextButton(onClick = onDismiss) { Text(Str.Cancel.t()) } } },
     )
 }

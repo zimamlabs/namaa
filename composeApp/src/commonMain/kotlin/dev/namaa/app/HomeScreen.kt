@@ -49,7 +49,9 @@ import dev.namaa.core.ReleaseNotes
 import dev.namaa.core.Txn
 import dev.namaa.core.BudgetState
 import dev.namaa.core.balance
-import dev.namaa.core.budgetStatuses
+import dev.namaa.core.balancesByCurrency
+import dev.namaa.core.currencyCode
+import dev.namaa.core.budgetStatusesIn
 import dev.namaa.core.formatMoney
 import dev.namaa.core.monthSummary
 import dev.namaa.core.monthlyTotals
@@ -90,9 +92,8 @@ fun HomeScreen(
 ) {
     val today = store.today
     val language = lang()
-    val month = monthSummary(store.txns, today.year, today.monthNumber)
-    val total = store.accounts.sumOf { balance(it, store.txns) }
-    val currency = store.accounts.map { it.currency }.distinct().singleOrNull() ?: ""
+    val month = monthSummary(store.activeTxns, today.year, today.monthNumber)
+    val balances = balancesByCurrency(store.accounts, store.txns)
     LazyColumn(Modifier.fillMaxSize().padding(padding), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
         if (store.rowProblems.isNotEmpty() || store.sideCopies.isNotEmpty()) item { RowProblemsCard(store) }
         item {
@@ -100,7 +101,10 @@ fun HomeScreen(
                 Column(Modifier.heroGlow().padding(22.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     Text(num("${monthName(today.monthNumber)} ${today.year}") + "  ·  " + prettyDate(today), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     Text(Str.Balance.t(), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Text((money(total) + " " + currency).trim(), style = MaterialTheme.typography.displaySmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface)
+                    balances.forEachIndexed { i, (code, minor) ->
+                        Text((money(minor) + " " + code).trim(), style = if (i == 0) MaterialTheme.typography.displaySmall else MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface)
+                    }
+                    CurrencyChips(store)
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                         Stat(Str.Income.t(), money(month.incomeMinor), MaterialTheme.colorScheme.secondary)
                         Stat(Str.Spent.t(), money(-month.expenseMinor), MaterialTheme.colorScheme.primary)
@@ -116,12 +120,12 @@ fun HomeScreen(
                 QuickAction(Icons.Rounded.SwapHoriz, Str.QuickTransfer.t(), Modifier.weight(1f), onTransfer)
             }
         }
-        val budgetStatus = budgetStatuses(store.budgets, store.txns, today.year, today.monthNumber)
+        val budgetStatus = budgetStatusesIn(store.budgets, store.accounts, store.txns, today.year, today.monthNumber, store.prefs.currency)
         if (budgetStatus.isNotEmpty()) item {
             Panel {
                 val warn = budgetStatus.count { it.state != BudgetState.Ok }
                 SectionTitle(Icons.Rounded.Savings, if (warn > 0) Str.BudgetsAttention.t(warn) else Str.Budgets.t()) { TextButton(onClick = { onOpen(Tab.Plan) }) { Text(Str.TabPlan.t()) } }
-                budgetStatus.take(3).forEach { BudgetBar(it) }
+                budgetStatus.take(3).forEach { BudgetBar(it, if (store.currencies.size > 1) it.budget.currency.ifBlank { store.prefs.currency }.currencyCode() else "") }
             }
         }
         if (month.byCategory.isNotEmpty()) item {
@@ -133,7 +137,7 @@ fun HomeScreen(
         item {
             Panel {
                 SectionTitle(Icons.Rounded.BarChart, Str.LastSix.t())
-                MonthBars(monthlyTotals(store.txns, today.year, today.monthNumber, 6))
+                MonthBars(monthlyTotals(store.activeTxns, today.year, today.monthNumber, 6))
             }
         }
         item {

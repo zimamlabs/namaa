@@ -14,6 +14,9 @@ import dev.namaa.core.MoneyBook
 import dev.namaa.core.Prefs
 import dev.namaa.core.PrefsFile
 import dev.namaa.core.Txn
+import dev.namaa.core.currenciesOf
+import dev.namaa.core.currencyCode
+import dev.namaa.core.txnsInCurrency
 import dev.namaa.core.newId
 import kotlinx.datetime.LocalDate
 
@@ -58,6 +61,13 @@ class NamaaStore(book: MoneyBook, private val prefsFile: PrefsFile, val location
     // First launch: a plain Cash account so nothing needs setting up.
     // Only when there is no accounts file at all: an existing file that fails to read is never replaced.
     private fun ensureCash() { if (!book.hasAccountsFile()) book.saveAccounts(listOf(Account(newId(), "Cash", prefs.currency))) }
+
+    /** The currency the month figures and charts show when the accounts use more than one; never added together. */
+    var shownCurrency by mutableStateOf("")
+    val currencies: List<String> get() = currenciesOf(accounts)
+    val activeCurrency: String get() = currencies.let { c -> shownCurrency.takeIf { it in c } ?: prefs.currency.currencyCode().takeIf { it in c } ?: c.firstOrNull() ?: prefs.currency.currencyCode() }
+    /** The transactions of [activeCurrency] (all of them when there is only one currency). */
+    val activeTxns: List<Txn> get() = if (currencies.size <= 1) txns else txnsInCurrency(txns, accounts, activeCurrency)
 
     /** Anything beyond the automatic Cash account counts as the user's own data. */
     val hasData: Boolean get() = txns.isNotEmpty() || accounts.size > 1

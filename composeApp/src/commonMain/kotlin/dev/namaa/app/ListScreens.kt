@@ -106,7 +106,7 @@ fun AccountsScreen(store: NamaaStore, padding: PaddingValues, onEdit: (Account) 
 fun ReportScreen(store: NamaaStore, padding: PaddingValues) {
     var shown by remember { mutableStateOf(store.today.year to store.today.monthNumber) }
     val (year, month) = shown
-    val s = monthSummary(store.txns, year, month)
+    val s = monthSummary(store.activeTxns, year, month)
     LazyColumn(Modifier.fillMaxSize().padding(padding), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         item {
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
@@ -115,6 +115,7 @@ fun ReportScreen(store: NamaaStore, padding: PaddingValues) {
                 IconButton(onClick = { shown = shiftMonth(year, month, 1) }) { Icon(Icons.Rounded.ChevronRight, Str.NextMonth.t()) }
             }
         }
+        item { CurrencyChips(store) }
         item {
             Panel {
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {

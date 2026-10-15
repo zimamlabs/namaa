@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- **Different currencies are never added together.** Home shows a balance per currency; the month figures, charts and Report show one currency at a time (chips to switch); each budget counts only its own currency; debts are totalled per currency. A transfer between accounts of different currencies is refused with a message. Existing files read unchanged.
+
 - **Nothing vanishes after access returns.** Transactions and accounts added while Namaa was using its private folder (all-files access off) used to be hidden once the shared folder came back. They are now merged in by id, once, without touching or deleting the kept files; anything that cannot be merged is listed on Home.
 
 - **Repeating rules.** Editing the start date of a rule no longer adds a second transaction for a month or week already covered. A rule that starts far in the past asks before adding many transactions at once, and the catch-up now writes each year file once, so it is fast.

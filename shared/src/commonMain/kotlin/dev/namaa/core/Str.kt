@@ -112,6 +112,7 @@ enum class Str(val en: String, val ar: String) {
     CatchUpBody("This rule starts in the past, so saving it adds {0} transactions at once, dated up to today.", "تبدأ هذه القاعدة في الماضي، لذا سيضيف حفظها {0} معاملة دفعة واحدة بتواريخ حتى اليوم."),
     AddThem("Add them", "أضفها"),
     SideCopies("These files were kept beside your data and are not shown: {0}", "حُفظت هذه الملفات بجانب بياناتك ولا تظهر: {0}"),
+    TransferCurrencyMismatch("These accounts use different currencies. Namaa does not convert, so money can only move between accounts in the same currency.", "هذان الحسابان بعملتين مختلفتين. لا يحوّل نماء العملات، فلا يمكن نقل المال إلا بين حسابين بالعملة نفسها."),
     AmountHint450("Amount, e.g. 450", "المبلغ، مثل 450"),
     AmountHint1250("Amount, e.g. 12.50", "المبلغ، مثل 12.50"),
     AmountHint50("Amount, e.g. 50", "المبلغ، مثل 50"),

@@ -10,6 +10,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -25,6 +26,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import kotlinx.datetime.DayOfWeek
 import kotlinx.datetime.LocalDate
+
+/** Chips to pick which currency the figures below show; nothing when there is only one. */
+@Composable
+fun CurrencyChips(store: NamaaStore) {
+    if (store.currencies.size < 2) return
+    androidx.compose.foundation.lazy.LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        items(store.currencies) { c -> androidx.compose.material3.FilterChip(c == store.activeCurrency, { store.shownCurrency = c }, { Text(c) }) }
+    }
+}
 
 /** The card used everywhere: large rounded corners, a hairline border, and the small orange diamond of the mark in the corner. */
 @Composable

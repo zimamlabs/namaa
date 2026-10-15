@@ -12,7 +12,7 @@ data class Payment(val date: LocalDate, val amountMinor: Long, val note: String 
 @Serializable
 data class Debt(
     val id: String, val person: String, val direction: Direction, val principalMinor: Long, val date: LocalDate,
-    val note: String = "", val payments: List<Payment> = emptyList(),
+    val note: String = "", val payments: List<Payment> = emptyList(), val currency: String = "",
 ) {
     val paidMinor: Long get() = payments.sumOf { it.amountMinor }
     val remainingMinor: Long get() = principalMinor - paidMinor
@@ -40,3 +40,12 @@ fun balanceByPerson(debts: List<Debt>): List<Pair<String, Long>> =
     debts.groupBy { it.person.trim().lowercase() }.map { (_, list) ->
         list.first().person.trim() to list.sumOf { if (it.direction == Direction.TheyOweMe) it.remainingMinor.coerceAtLeast(0) else -it.remainingMinor.coerceAtLeast(0) }
     }.filter { it.second != 0L }.sortedByDescending { kotlin.math.abs(it.second) }
+
+/** Totals per currency (empty means [defaultCurrency]), in order of first appearance. */
+fun debtTotalsByCurrency(debts: List<Debt>, defaultCurrency: String): List<Pair<String, DebtTotals>> =
+    debts.groupBy { it.currency.ifBlank { defaultCurrency }.currencyCode() }.map { (c, list) -> c to debtTotals(list) }
+
+/** One line per person and currency: positive means they owe you. Settled lines are left out. */
+fun balanceByPersonAndCurrency(debts: List<Debt>, defaultCurrency: String): List<Triple<String, String, Long>> =
+    debts.groupBy { it.currency.ifBlank { defaultCurrency }.currencyCode() }.flatMap { (c, list) -> balanceByPerson(list).map { Triple(it.first, c, it.second) } }
+        .sortedWith(compareByDescending<Triple<String, String, Long>> { kotlin.math.abs(it.third) })

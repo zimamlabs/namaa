@@ -4,7 +4,7 @@ import kotlinx.serialization.Serializable
 
 /** A monthly spending limit for one category, in minor units. */
 @Serializable
-data class Budget(val category: String, val limitMinor: Long)
+data class Budget(val category: String, val limitMinor: Long, val currency: String = "")
 
 enum class BudgetState { Ok, Near, Over }
 
@@ -21,3 +21,7 @@ fun budgetStatuses(budgets: List<Budget>, txns: List<Txn>, year: Int, month: Int
         BudgetStatus(b, spent, b.limitMinor - spent, fraction, when { spent > b.limitMinor -> BudgetState.Over; fraction >= 0.8f -> BudgetState.Near; else -> BudgetState.Ok })
     }.sortedByDescending { it.fraction }
 }
+
+/** Budgets with each one counting only transactions of accounts in its own currency (empty means [defaultCurrency]). Never adds currencies together. */
+fun budgetStatusesIn(budgets: List<Budget>, accounts: List<Account>, txns: List<Txn>, year: Int, month: Int, defaultCurrency: String): List<BudgetStatus> =
+    budgets.flatMap { b -> budgetStatuses(listOf(b), txnsInCurrency(txns, accounts, b.currency.ifBlank { defaultCurrency }.currencyCode()), year, month) }.sortedByDescending { it.fraction }
