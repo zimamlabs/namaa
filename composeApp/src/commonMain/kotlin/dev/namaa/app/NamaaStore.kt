@@ -23,7 +23,7 @@ import dev.namaa.core.newId
 import kotlinx.datetime.LocalDate
 
 /** [askAccess] opens the system screen that grants access to the shared Zimam folder; null where there is no such step. */
-class NamaaStore(book: MoneyBook, private val settingsRepository: SettingsRepository, val location: DataLocation, val askAccess: (() -> Unit)? = null, val files: FileActions? = null) {
+class NamaaStore(book: MoneyBook, private val settingsRepository: SettingsRepository, val location: DataLocation, val askAccess: (() -> Unit)? = null, val files: FileActions? = null, val lock: AppLock? = null) {
     var book by mutableStateOf(book)
         private set
     var accounts by mutableStateOf(emptyList<Account>())
@@ -102,6 +102,19 @@ class NamaaStore(book: MoneyBook, private val settingsRepository: SettingsReposi
     fun saveRecurring(list: List<Recurring>) { book.saveRecurring(list); reload() }
 
     fun saveDebts(list: List<Debt>) { book.saveDebts(list); debts = list }
+
+    /** True while the app lock is on and the user has not got through the phone's lock screen yet. */
+    var locked by mutableStateOf(settingsRepository.current.appLock && lock != null)
+
+    fun relock() { if (settings.appLock && lock != null) locked = true }
+
+    /** Moves all data files into a `cleared-<stamp>` folder (nothing is destroyed) and starts fresh; returns that folder. */
+    fun clearAll(): String {
+        val stamp = book.stamp()
+        book.clearAll(stamp)
+        ensureCash(); reload()
+        return (book.root / "cleared-$stamp").toString()
+    }
 
     /** A whole-folder backup, checked by reading it back, handed to the system "save as" screen. */
     fun backupEverything(onDone: (Boolean) -> Unit) {

@@ -263,6 +263,16 @@ class MoneyBook(
         return report
     }
 
+    /** Moves every data file into `cleared-<stamp>/` inside the folder, so "clear all data" never destroys anything. Returns how many files were moved. */
+    fun clearAll(stamp: String): Int {
+        val files = fs.listOrNull(root).orEmpty().filter { Backup.isDataFile(it.name) && fs.metadata(it).isRegularFile }
+        if (files.isEmpty()) return 0
+        val dir = root / "cleared-$stamp"
+        fs.createDirectories(dir)
+        files.forEach { fs.atomicMove(it, dir / it.name) }
+        return files.size
+    }
+
     private fun dataFilesExist() = fs.listOrNull(root).orEmpty().any { Backup.isDataFile(it.name) }
 
     data class MergeReport(val mergedTransactions: Int, val mergedAccounts: Int)

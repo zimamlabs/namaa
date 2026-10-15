@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+
+- **Settings is a list of sections** (Appearance, Sections and layout, Language, Currency and categories, Data and storage, Privacy and security, About), the same shape as the other Zimam apps.
+- **Appearance:** mode, six colour themes, four text sizes with a live preview, comfortable or compact spacing, reduce animations.
+- **Sections and layout:** choose which sections show, their order and the start section.
+- **Privacy:** an optional app lock that asks for the phone's screen lock when Namaa opens.
+- **Data:** "Clear all data" moves everything into a folder inside the data folder after you type a word; nothing is destroyed.
+
 ## 0.6.0
 
 - **Back up and restore.** Settings can back up everything (accounts, transactions, budgets, repeating rules, debts) into one file you save anywhere through the system screen, no permission needed. The backup is read back and checked. Restore shows what it will add, saves your current data first in `safety-backups/`, adds only what is missing by id and never deletes or replaces. Exports can be saved to another place too.
