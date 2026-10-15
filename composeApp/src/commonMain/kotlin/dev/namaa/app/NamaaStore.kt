@@ -103,6 +103,10 @@ class NamaaStore(book: MoneyBook, private val prefsFile: PrefsFile, val location
 
     fun deleteTxn(id: String) { book.deleteTransaction(id); txns = book.allTransactions() }
 
+    fun updateTransfer(tid: String, date: LocalDate, from: String, to: String, amountMinor: Long, note: String) {
+        book.updateTransfer(tid, date, from, to, amountMinor, note); txns = book.allTransactions()
+    }
+
     fun saveTransfer(date: LocalDate, from: String, to: String, amountMinor: Long, note: String) {
         book.saveTransfer(date, from, to, amountMinor, note); txns = book.allTransactions()
     }

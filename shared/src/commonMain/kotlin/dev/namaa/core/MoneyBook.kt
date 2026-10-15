@@ -114,6 +114,7 @@ class MoneyBook(
 
     /** Adds the transaction, or replaces the one with the same id (moving it if its year changed). */
     fun saveTransaction(txn: Txn): Txn {
+        require(txn.transferId.isEmpty()) { "a transfer leg is never saved alone; use updateTransfer" }
         val saved = if (txn.id.isEmpty()) txn.copy(id = newId()) else txn
         allTransactions().firstOrNull { it.id == saved.id && it.date.year != saved.date.year }?.let { deleteTransaction(it.id) }
         val year = saved.date.year
@@ -121,13 +122,28 @@ class MoneyBook(
         return saved
     }
 
-    /** Moves [amountMinor] (positive) from one account to another as two legs that always sum to zero; returns the transfer id. */
+    /** Moves [amountMinor] (positive) from one account to another as two legs that always sum to zero, written together; returns the transfer id. */
     fun saveTransfer(date: LocalDate, fromAccount: String, toAccount: String, amountMinor: Long, note: String = ""): String {
-        require(amountMinor > 0 && fromAccount != toAccount) { "a transfer needs a positive amount and two different accounts" }
         val tid = newId()
-        saveTransaction(Txn("", date, -amountMinor, fromAccount, "Transfer", note, tid))
-        saveTransaction(Txn("", date, amountMinor, toAccount, "Transfer", note, tid))
+        val legs = transferLegs(tid, newId(), newId(), date, fromAccount, toAccount, amountMinor, note)
+        writeYear(date.year, transactions(date.year) + legs)
         return tid
+    }
+
+    private fun transferLegs(tid: String, outId: String, inId: String, date: LocalDate, from: String, to: String, amountMinor: Long, note: String): List<Txn> {
+        require(amountMinor > 0 && from != to) { "a transfer needs a positive amount and two different accounts" }
+        return listOf(Txn(outId, date, -amountMinor, from, "Transfer", note, tid), Txn(inId, date, amountMinor, to, "Transfer", note, tid))
+    }
+
+    /** Changes both legs of transfer [tid] together (ids kept); nothing changes if the values are refused. */
+    fun updateTransfer(tid: String, date: LocalDate, fromAccount: String, toAccount: String, amountMinor: Long, note: String) {
+        val old = allTransactions().filter { it.transferId == tid }
+        require(old.size == 2) { "no such transfer" }
+        val legs = transferLegs(tid, old.first { it.amountMinor < 0 }.id, old.first { it.amountMinor > 0 }.id, date, fromAccount, toAccount, amountMinor, note)
+        val oldYear = old.first().date.year
+        // Add to the new year first: a crash then leaves a visible duplicate, never a lost transfer.
+        writeYear(date.year, transactions(date.year).filter { it.transferId != tid } + legs)
+        if (oldYear != date.year) writeYear(oldYear, transactions(oldYear).filter { it.transferId != tid })
     }
 
     /** Deletes the transaction; for a transfer both legs go together so balances never drift. */

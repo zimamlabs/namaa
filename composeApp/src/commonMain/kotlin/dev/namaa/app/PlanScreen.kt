@@ -181,7 +181,7 @@ private fun BudgetDialog(existing: Budget?, onDismiss: () -> Unit, onDelete: (()
             }
         },
         confirmButton = { TextButton(enabled = category.isNotBlank() && minor != null, onClick = { onSave(Budget(category.trim(), minor!!)) }) { Text(Str.Save.t()) } },
-        dismissButton = { Row { onDelete?.let { TextButton(onClick = it) { Text(Str.Delete.t(), color = MaterialTheme.colorScheme.error) } }; TextButton(onClick = onDismiss) { Text(Str.Cancel.t()) } } },
+        dismissButton = { Row { onDelete?.let { DeleteButton(Str.DeleteBudgetDetail.t(), it) }; TextButton(onClick = onDismiss) { Text(Str.Cancel.t()) } } },
     )
 }
 
@@ -214,7 +214,7 @@ private fun RecurringDialog(existing: Recurring?, store: NamaaStore, today: Loca
                 onSave(Recurring(existing?.id ?: newId(), if (income) minor!! else -minor!!, accountId, category.trim(), note.trim(), frequency, start, existing?.lastGenerated?.takeIf { existing.start == start && existing.frequency == frequency }))
             }) { Text(Str.Save.t()) }
         },
-        dismissButton = { Row { onDelete?.let { TextButton(onClick = it) { Text(Str.Delete.t(), color = MaterialTheme.colorScheme.error) } }; TextButton(onClick = onDismiss) { Text(Str.Cancel.t()) } } },
+        dismissButton = { Row { onDelete?.let { DeleteButton(Str.DeleteRepeatingDetail.t(), it) }; TextButton(onClick = onDismiss) { Text(Str.Cancel.t()) } } },
     )
 }
 
@@ -239,7 +239,7 @@ private fun DebtDialog(existing: Debt?, today: LocalDate, onDismiss: () -> Unit,
             }
         },
         confirmButton = { TextButton(enabled = person.isNotBlank() && minor != null, onClick = { onSave(Debt(existing?.id ?: newId(), person.trim(), direction, minor!!, date, note.trim(), existing?.payments.orEmpty())) }) { Text(Str.Save.t()) } },
-        dismissButton = { Row { onDelete?.let { TextButton(onClick = it) { Text(Str.Delete.t(), color = MaterialTheme.colorScheme.error) } }; TextButton(onClick = onDismiss) { Text(Str.Cancel.t()) } } },
+        dismissButton = { Row { onDelete?.let { DeleteButton(Str.DeleteDebtDetail.t(existing?.payments?.size ?: 0), it) }; TextButton(onClick = onDismiss) { Text(Str.Cancel.t()) } } },
     )
 }
 
