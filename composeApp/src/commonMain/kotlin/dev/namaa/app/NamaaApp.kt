@@ -53,9 +53,13 @@ enum class Tab(val label: Str, val icon: ImageVector) {
 /** Which dialog is open: a new or edited transaction, a transfer, or a new or renamed account. */
 private sealed interface Editing {
     data class Transaction(val txn: Txn?, val income: Boolean = false) : Editing
-    data object Transfer : Editing
+    data class Transfer(val legs: List<Txn>? = null) : Editing
     data class AccountEdit(val account: Account?) : Editing
 }
+
+/** A transfer leg opens the transfer editor (both legs together); any other row opens the ordinary editor. */
+private fun editorFor(store: NamaaStore, txn: Txn): Editing =
+    if (txn.transferId.isEmpty()) Editing.Transaction(txn) else Editing.Transfer(store.txns.filter { it.transferId == txn.transferId })
 
 private enum class Page { Settings, About }
 
@@ -103,8 +107,8 @@ fun NamaaApp(store: NamaaStore) {
                     AnimatedContent(tab, transitionSpec = { fadeIn(tween(180)) togetherWith fadeOut(tween(120)) }, label = "tab") { shownTab ->
                     when (shownTab) {
                         Tab.Home -> HomeScreen(store, padding, onExpense = { editing = Editing.Transaction(null, false) }, onIncome = { editing = Editing.Transaction(null, true) },
-                            onTransfer = { editing = Editing.Transfer }, onOpen = { tab = it }, onEdit = { editing = Editing.Transaction(it) }, onTour = { store.tourRequested = true })
-                        Tab.Money -> TransactionsScreen(store, padding) { editing = Editing.Transaction(it) }
+                            onTransfer = { editing = Editing.Transfer() }, onOpen = { tab = it }, onEdit = { editing = editorFor(store, it) }, onTour = { store.tourRequested = true })
+                        Tab.Money -> TransactionsScreen(store, padding) { editing = editorFor(store, it) }
                         Tab.Accounts -> AccountsScreen(store, padding) { editing = Editing.AccountEdit(it) }
                         Tab.Plan -> PlanScreen(store, padding, planSection, { planSection = it }, planAdd)
                         Tab.Report -> ReportScreen(store, padding)
@@ -115,7 +119,10 @@ fun NamaaApp(store: NamaaStore) {
             when (val e = editing) {
                 is Editing.Transaction -> TxnDialog(e.txn, e.income, store.accounts, store.today, onDismiss = { editing = null },
                     onDelete = e.txn?.let { t -> { store.deleteTxn(t.id); editing = null } }) { saved -> store.saveTxn(saved); editing = null }
-                Editing.Transfer -> TransferDialog(store.accounts, store.today, onDismiss = { editing = null }) { from, to, minor, date, note -> store.saveTransfer(date, from, to, minor, note); editing = null }
+                is Editing.Transfer -> TransferDialog(store.accounts, store.today, e.legs, e.legs?.let { l -> { store.deleteTxn(l.first().id); editing = null } }, onDismiss = { editing = null }) { from, to, minor, date, note ->
+                    if (e.legs == null) store.saveTransfer(date, from, to, minor, note) else store.updateTransfer(e.legs.first().transferId, date, from, to, minor, note)
+                    editing = null
+                }
                 is Editing.AccountEdit -> AccountDialog(e.account, store.prefs.currency, onDismiss = { editing = null }) { saved ->
                     store.saveAccounts(if (e.account == null) store.accounts + saved else store.accounts.map { if (it.id == saved.id) saved else it })
                     editing = null

@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- **Transfers stay balanced.** Saving a transfer writes both legs in one write. Tapping a transfer opens a transfer editor that changes both legs together (a single leg can no longer be edited alone).
+- **Every delete asks first**, and says what is lost: the matching transfer leg, a debt's payments, a rule's kept transactions.
+
 - **A file Namaa cannot read is never treated as empty.** If accounts.json, budgets.json, recurring.json or debts.json is damaged, Namaa keeps a copy (`<name>.corrupt-<time>`), shows a recovery screen and writes nothing over it until you fix the file or choose to start without it. A year file with unreadable rows is copied whole before it is ever rewritten, and Home says so.
 
 - **Amounts are no longer misread.** "1,234" used to be saved as 1.23. Namaa now accepts grouping only when it is unambiguous ("1,234.50", "1.234,50", "1,234,567"), refuses "1,234" and "12.999" with a message instead of guessing or cutting digits, and refuses amounts too large to store.

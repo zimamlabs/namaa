@@ -66,6 +66,20 @@ fun AmountField(value: String, onChange: (String) -> Unit, label: String? = null
     )
 }
 
+/** The one way anything is deleted: a Delete button that asks first and says what is lost. */
+@Composable
+fun DeleteButton(detail: String, onConfirm: () -> Unit) {
+    var asking by remember { mutableStateOf(false) }
+    TextButton(onClick = { asking = true }) { Text(Str.Delete.t(), color = MaterialTheme.colorScheme.error) }
+    if (asking) AlertDialog(
+        onDismissRequest = { asking = false },
+        title = { Text(Str.ConfirmDeleteTitle.t()) },
+        text = { Text(detail) },
+        confirmButton = { TextButton(onClick = { asking = false; onConfirm() }) { Text(Str.Delete.t(), color = MaterialTheme.colorScheme.error) } },
+        dismissButton = { TextButton(onClick = { asking = false }) { Text(Str.Cancel.t()) } },
+    )
+}
+
 val defaultCategories = listOf("Food", "Transport", "Home", "Bills", "Health", "Fun", "Shopping", "Salary", "Other")
 
 /** A button that shows the date and opens a calendar to pick another; nobody types a date. */
@@ -129,7 +143,7 @@ fun TxnDialog(existing: Txn?, startIncome: Boolean, accounts: List<Account>, tod
         },
         dismissButton = {
             Row {
-                onDelete?.let { TextButton(onClick = it) { Text(Str.Delete.t(), color = MaterialTheme.colorScheme.error) } }
+                onDelete?.let { DeleteButton(Str.DeleteTxnDetail.t(), it) }
                 TextButton(onClick = onDismiss) { Text(Str.Cancel.t()) }
             }
         },
@@ -137,16 +151,17 @@ fun TxnDialog(existing: Txn?, startIncome: Boolean, accounts: List<Account>, tod
 }
 
 @Composable
-fun TransferDialog(accounts: List<Account>, today: LocalDate, onDismiss: () -> Unit, onSave: (from: String, to: String, minor: Long, date: LocalDate, note: String) -> Unit) {
-    var from by remember { mutableStateOf(accounts.first().id) }
-    var to by remember { mutableStateOf(accounts.getOrElse(1) { accounts.first() }.id) }
-    var amount by remember { mutableStateOf("") }
-    var note by remember { mutableStateOf("") }
-    var date by remember { mutableStateOf(today) }
+fun TransferDialog(accounts: List<Account>, today: LocalDate, existing: List<Txn>? = null, onDelete: (() -> Unit)? = null, onDismiss: () -> Unit, onSave: (from: String, to: String, minor: Long, date: LocalDate, note: String) -> Unit) {
+    val out = existing?.firstOrNull { it.amountMinor < 0 }
+    var from by remember { mutableStateOf(out?.accountId ?: accounts.first().id) }
+    var to by remember { mutableStateOf(existing?.firstOrNull { it.amountMinor > 0 }?.accountId ?: accounts.getOrElse(1) { accounts.first() }.id) }
+    var amount by remember { mutableStateOf(out?.let { formatMoney(-it.amountMinor) } ?: "") }
+    var note by remember { mutableStateOf(out?.note ?: "") }
+    var date by remember { mutableStateOf(out?.date ?: today) }
     val minor = parseMoney(amount)?.takeIf { it > 0 }
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(Str.TransferTitle.t()) },
+        title = { Text(if (existing == null) Str.TransferTitle.t() else Str.EditTransfer.t()) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 if (accounts.size < 2) Text(Str.AddSecondAccount.t(), color = MaterialTheme.colorScheme.error)
@@ -160,7 +175,7 @@ fun TransferDialog(accounts: List<Account>, today: LocalDate, onDismiss: () -> U
             }
         },
         confirmButton = { TextButton(enabled = minor != null && from != to, onClick = { onSave(from, to, minor!!, date, note.trim()) }) { Text(Str.Move.t()) } },
-        dismissButton = { TextButton(onClick = onDismiss) { Text(Str.Cancel.t()) } },
+        dismissButton = { Row { onDelete?.let { DeleteButton(Str.DeleteTransferDetail.t(), it) }; TextButton(onClick = onDismiss) { Text(Str.Cancel.t()) } } },
     )
 }
 
