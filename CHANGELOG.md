@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.6.0
 
 - **Back up and restore.** Settings can back up everything (accounts, transactions, budgets, repeating rules, debts) into one file you save anywhere through the system screen, no permission needed. The backup is read back and checked. Restore shows what it will add, saves your current data first in `safety-backups/`, adds only what is missing by id and never deletes or replaces. Exports can be saved to another place too.
 - Android system backup is switched off, so financial files are never uploaded to a Google account behind your back; the in-app backup is the way.
