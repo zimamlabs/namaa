@@ -38,6 +38,7 @@ kotlin {
         val desktopTest by getting {
             dependencies {
                 implementation(kotlin("test"))
+                implementation(libs.okio.fakefilesystem)
             }
         }
     }
