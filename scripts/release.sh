@@ -9,8 +9,16 @@
 set -euo pipefail
 cd "$(dirname "${BASH_SOURCE[0]}")/.."
 
-VERSION="$(sed -n 's/.*versionName = "\(.*\)".*/\1/p' composeApp/build.gradle.kts | head -1)"
-: "${VERSION:?could not read versionName}"
+# Android APKs only. No desktop packages are built or published.
+VERSION="$(sed -n 's/^val appVersion = "\(.*\)".*/\1/p' composeApp/build.gradle.kts | head -1)"
+: "${VERSION:?could not read appVersion}"
+APP_VERSION="$(sed -n 's/.*const val APP_VERSION = "\(.*\)".*/\1/p' composeApp/src/commonMain/kotlin/dev/namaa/app/NamaaApp.kt | head -1)"
+NOTES="$(awk -v v="## $VERSION" '$0==v{p=1;next} /^## /{p=0} p' CHANGELOG.md | sed '/^[[:space:]]*$/d')"
+[ "$APP_VERSION" = "$VERSION" ] || { echo "error: APP_VERSION ($APP_VERSION) differs from appVersion ($VERSION)" >&2; exit 1; }
+if [ "${1:-}" = "--publish" ]; then
+  [ -n "${NAMAA_KEYSTORE:-}" ] || { echo "error: refusing to publish unsigned APKs, set NAMAA_KEYSTORE" >&2; exit 1; }
+  [ -n "$NOTES" ] || { echo "error: CHANGELOG.md has no '## $VERSION' section with text" >&2; exit 1; }
+fi
 [ -n "${NAMAA_KEYSTORE:-}" ] || echo "note: NAMAA_KEYSTORE is not set, the APKs will be unsigned" >&2
 
 ./gradlew --no-daemon :shared:desktopTest :composeApp:assembleRelease
@@ -26,6 +34,5 @@ done
 ls -l "$OUT"
 
 if [ "${1:-}" = "--publish" ]; then
-  NOTES="$(awk -v v="## $VERSION" '$0==v{p=1;next} /^## /{p=0} p' CHANGELOG.md)"
-  gh release create "v$VERSION" "$OUT"/* --title "Namaa $VERSION" --notes "${NOTES:-Namaa $VERSION}"
+  gh release create "v$VERSION" "$OUT"/* --title "Namaa $VERSION" --notes "$NOTES"
 fi
