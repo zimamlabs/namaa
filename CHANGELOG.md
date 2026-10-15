@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- **Amounts are no longer misread.** "1,234" used to be saved as 1.23. Namaa now accepts grouping only when it is unambiguous ("1,234.50", "1.234,50", "1,234,567"), refuses "1,234" and "12.999" with a message instead of guessing or cutting digits, and refuses amounts too large to store.
+
 ## 0.5.1
 
 - A new app icon.

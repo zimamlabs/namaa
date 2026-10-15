@@ -34,12 +34,37 @@ import dev.namaa.core.Account
 import dev.namaa.core.Txn
 import dev.namaa.core.formatMoney
 import dev.namaa.core.newId
+import dev.namaa.core.MoneyParse
+import dev.namaa.core.MoneyProblem
 import dev.namaa.core.parseMoney
+import dev.namaa.core.parseMoneyResult
 import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.atStartOfDayIn
 import kotlinx.datetime.toLocalDateTime
+
+/** The message for a typed amount that was refused, or null when it is fine or still empty. */
+@Composable
+fun amountProblem(text: String): String? = when ((parseMoneyResult(text) as? MoneyParse.Bad)?.problem) {
+    null, MoneyProblem.Empty -> null
+    MoneyProblem.NotANumber -> Str.AmountNotANumber.t()
+    MoneyProblem.Ambiguous -> Str.AmountAmbiguous.t()
+    MoneyProblem.TooManyDecimals -> Str.AmountTooManyDecimals.t()
+    MoneyProblem.TooLarge -> Str.AmountTooLarge.t()
+}
+
+/** A decimal text field that says why an amount is refused instead of silently disabling Save. */
+@Composable
+fun AmountField(value: String, onChange: (String) -> Unit, label: String? = null, placeholder: String? = null) {
+    val problem = amountProblem(value)
+    OutlinedTextField(
+        value, onChange, singleLine = true, isError = problem != null,
+        label = label?.let { { Text(it) } }, placeholder = placeholder?.let { { Text(it) } },
+        supportingText = problem?.let { { Text(it) } },
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal), modifier = Modifier.fillMaxWidth(),
+    )
+}
 
 val defaultCategories = listOf("Food", "Transport", "Home", "Bills", "Health", "Fun", "Shopping", "Salary", "Other")
 
@@ -85,7 +110,7 @@ fun TxnDialog(existing: Txn?, startIncome: Boolean, accounts: List<Account>, tod
                     FilterChip(!income, { income = false }, { Text(Str.ChipSpent.t()) })
                     FilterChip(income, { income = true }, { Text(Str.ChipReceived.t()) })
                 }
-                OutlinedTextField(amount, { amount = it }, singleLine = true, placeholder = { Text(Str.AmountHint1250.t()) }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal), modifier = Modifier.fillMaxWidth())
+                AmountField(amount, { amount = it }, placeholder = Str.AmountHint1250.t())
                 if (accounts.size > 1) LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     items(accounts, key = { it.id }) { a -> FilterChip(accountId == a.id, { accountId = a.id }, { Text(a.name) }) }
                 }
@@ -129,7 +154,7 @@ fun TransferDialog(accounts: List<Account>, today: LocalDate, onDismiss: () -> U
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) { items(accounts, key = { it.id }) { a -> FilterChip(from == a.id, { from = a.id }, { Text(a.name) }) } }
                 Text(Str.To.t(), style = MaterialTheme.typography.labelMedium)
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) { items(accounts, key = { it.id }) { a -> FilterChip(to == a.id, { to = a.id }, { Text(a.name) }) } }
-                OutlinedTextField(amount, { amount = it }, singleLine = true, placeholder = { Text(Str.AmountHint50.t()) }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal), modifier = Modifier.fillMaxWidth())
+                AmountField(amount, { amount = it }, placeholder = Str.AmountHint50.t())
                 OutlinedTextField(note, { note = it }, singleLine = true, placeholder = { Text(Str.NoteOptional.t()) }, modifier = Modifier.fillMaxWidth())
                 DateField(date) { date = it }
             }
@@ -152,7 +177,7 @@ fun AccountDialog(existing: Account?, defaultCurrency: String, onDismiss: () -> 
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 OutlinedTextField(name, { name = it }, singleLine = true, label = { Text(Str.NameLabel.t()) }, modifier = Modifier.fillMaxWidth())
                 OutlinedTextField(currency, { currency = it }, singleLine = true, label = { Text(Str.CurrencyLabel.t()) }, modifier = Modifier.fillMaxWidth())
-                OutlinedTextField(opening, { opening = it }, singleLine = true, isError = openingMinor == null, label = { Text(Str.OpeningBalance.t()) }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal), modifier = Modifier.fillMaxWidth())
+                AmountField(opening, { opening = it }, label = Str.OpeningBalance.t())
             }
         },
         confirmButton = {

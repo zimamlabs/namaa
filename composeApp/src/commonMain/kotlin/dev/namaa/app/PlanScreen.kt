@@ -177,7 +177,7 @@ private fun BudgetDialog(existing: Budget?, onDismiss: () -> Unit, onDelete: (()
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 OutlinedTextField(category, { category = it }, singleLine = true, label = { Text("Category") }, modifier = Modifier.fillMaxWidth())
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) { items(defaultCategories) { c -> FilterChip(category == c, { category = c }, { Text(categoryShown(c)) }) } }
-                OutlinedTextField(limit, { limit = it }, singleLine = true, label = { Text(Str.LimitPerMonth.t()) }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal), modifier = Modifier.fillMaxWidth())
+                AmountField(limit, { limit = it }, label = Str.LimitPerMonth.t())
             }
         },
         confirmButton = { TextButton(enabled = category.isNotBlank() && minor != null, onClick = { onSave(Budget(category.trim(), minor!!)) }) { Text(Str.Save.t()) } },
@@ -200,7 +200,7 @@ private fun RecurringDialog(existing: Recurring?, store: NamaaStore, today: Loca
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) { FilterChip(!income, { income = false }, { Text(Str.ChipSpent.t()) }); FilterChip(income, { income = true }, { Text(Str.ChipReceived.t()) }) }
-                OutlinedTextField(amount, { amount = it }, singleLine = true, placeholder = { Text(Str.AmountHint450.t()) }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal), modifier = Modifier.fillMaxWidth())
+                AmountField(amount, { amount = it }, placeholder = Str.AmountHint450.t())
                 if (store.accounts.size > 1) LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) { items(store.accounts, key = { it.id }) { a -> FilterChip(accountId == a.id, { accountId = a.id }, { Text(a.name) }) } }
                 OutlinedTextField(category, { category = it }, singleLine = true, placeholder = { Text("Category") }, modifier = Modifier.fillMaxWidth())
                 OutlinedTextField(note, { note = it }, singleLine = true, placeholder = { Text(Str.NoteOptional.t()) }, modifier = Modifier.fillMaxWidth())
@@ -232,7 +232,7 @@ private fun DebtDialog(existing: Debt?, today: LocalDate, onDismiss: () -> Unit,
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) { FilterChip(direction == Direction.TheyOweMe, { direction = Direction.TheyOweMe }, { Text(Str.ILent.t()) }); FilterChip(direction == Direction.IOweThem, { direction = Direction.IOweThem }, { Text(Str.IBorrowed.t()) }) }
                 OutlinedTextField(person, { person = it }, singleLine = true, label = { Text(Str.Person.t()) }, modifier = Modifier.fillMaxWidth())
-                OutlinedTextField(amount, { amount = it }, singleLine = true, label = { Text(Str.Amount.t()) }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal), modifier = Modifier.fillMaxWidth())
+                AmountField(amount, { amount = it }, label = Str.Amount.t())
                 OutlinedTextField(note, { note = it }, singleLine = true, placeholder = { Text(Str.NoteOptional.t()) }, modifier = Modifier.fillMaxWidth())
                 DateField(date) { date = it }
                 if (existing != null && existing.payments.isNotEmpty()) Text(Str.PaymentsSoFar.t(existing.payments.joinToString { formatMoney(it.amountMinor) }), style = MaterialTheme.typography.labelMedium)
@@ -254,7 +254,7 @@ private fun PaymentDialog(debt: Debt, today: LocalDate, onDismiss: () -> Unit, o
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Text(Str.LeftAmount.t(money(debt.remainingMinor)), style = MaterialTheme.typography.bodyMedium)
-                OutlinedTextField(amount, { amount = it }, singleLine = true, isError = minor == null, label = { Text(Str.AmountAtMost.t()) }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal), modifier = Modifier.fillMaxWidth())
+                AmountField(amount, { amount = it }, label = Str.AmountAtMost.t())
                 OutlinedTextField(note, { note = it }, singleLine = true, placeholder = { Text(Str.NoteOptional.t()) }, modifier = Modifier.fillMaxWidth())
                 DateField(date) { date = it }
             }
