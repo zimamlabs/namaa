@@ -30,6 +30,7 @@ object Onboarding {
 /** Short notes per version, taken from the changelog; shown once after an update. Each note is English then Arabic. */
 object ReleaseNotes {
     private val notes: Map<String, List<Pair<String, String>>> = mapOf(
+        "0.5.1" to listOf("A new app icon: a sprout growing from the ground." to "أيقونة جديدة للتطبيق: برعم ينمو من التربة."),
         "0.5.0" to listOf(
             "An Arabic interface with a right-to-left layout. Choose the language and the digits in Settings." to "واجهة عربية بتخطيط من اليمين إلى اليسار. اختر اللغة والأرقام من الإعدادات.",
         ),

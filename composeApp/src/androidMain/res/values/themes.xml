@@ -1,6 +1,6 @@
 <resources>
     <style name="Theme.Namaa" parent="android:Theme.Material.Light.NoActionBar">
-        <item name="android:windowBackground">#121214</item>
+        <item name="android:windowBackground">#14110F</item>
         <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:navigationBarColor">@android:color/transparent</item>
         <item name="android:windowLayoutInDisplayCutoutMode">shortEdges</item>
