@@ -7,6 +7,9 @@ plugins {
     alias(libs.plugins.compose.multiplatform)
 }
 
+// One version for the app, the Android build and the desktop package; scripts/release.sh reads this line.
+val appVersion = "0.5.1"
+
 kotlin {
     androidTarget()
     jvm("desktop")
@@ -48,7 +51,7 @@ android {
         minSdk = 26
         targetSdk = 35
         versionCode = 8
-        versionName = "0.5.1"
+        versionName = appVersion
     }
     signingConfigs {
         create("release") {
@@ -95,7 +98,7 @@ compose.desktop {
         nativeDistributions {
             targetFormats(TargetFormat.Deb)
             packageName = "namaa"
-            packageVersion = "1.0.0"
+            packageVersion = appVersion
             description = "Private money tracking in plain files"
             vendor = "Zimam"
             linux {

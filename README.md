@@ -13,6 +13,8 @@
 
 ## What it is
 
+**Android today, Linux later.** Releases are Android APKs only. The desktop code stays in the repository and keeps compiling and testing, but it is not packaged or promised yet.
+
 Namaa (نماء, growth) keeps your accounts and your income and spending in a folder of plain files you own. It works offline, has no account and sends nothing anywhere.
 
 ## Features
@@ -79,7 +81,8 @@ You need JDK 17 or newer and, for Android, the Android SDK (platform 36).
 
 ```
 ./gradlew :shared:desktopTest            # the money tests
-./gradlew :composeApp:run                # run it on the desktop (data in ~/Zimam/Namaa)
+./gradlew :composeApp:desktopTest        # the screen-module tests
+./gradlew :composeApp:run                # run the desktop build for development (data in ~/Zimam/Namaa)
 ./gradlew :composeApp:assembleDebug      # Android debug APKs
 ```
 

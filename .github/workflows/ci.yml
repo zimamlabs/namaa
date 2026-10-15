@@ -24,7 +24,9 @@ jobs:
           distribution: temurin
           java-version: 21
       - uses: gradle/actions/setup-gradle@748248ddd2a24f49513d8f472f81c3a07d4d50e1 # v4.4.4
-      - name: Money tests
+      - name: Money tests and the translations check (LangTest)
         run: ./gradlew :shared:desktopTest
+      - name: App module tests
+        run: ./gradlew :composeApp:desktopTest
       - name: Android debug build
         run: ./gradlew :composeApp:assembleDebug
