@@ -33,5 +33,8 @@ fun RecoveryScreen(store: NamaaStore) {
 /** A note on Home when some rows of a year file could not be read. */
 @Composable
 fun RowProblemsCard(store: NamaaStore) {
-    Panel { store.rowProblems.forEach { Text(Str.RowsProblem.t(it.file, it.copy), color = MaterialTheme.colorScheme.error) } }
+    Panel {
+        store.rowProblems.forEach { Text(Str.RowsProblem.t(it.file, it.copy), color = MaterialTheme.colorScheme.error) }
+        if (store.sideCopies.isNotEmpty()) Text(Str.SideCopies.t(store.sideCopies.joinToString()), color = MaterialTheme.colorScheme.error)
+    }
 }

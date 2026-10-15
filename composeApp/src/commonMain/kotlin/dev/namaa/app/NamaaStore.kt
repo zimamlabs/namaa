@@ -44,6 +44,9 @@ class NamaaStore(book: MoneyBook, private val prefsFile: PrefsFile, val location
     var blocked by mutableStateOf(emptyList<DataProblem>())
         private set
     /** Year files with rows that could not be read; the file was copied before anything can be rewritten. */
+    /** Files kept beside the data (from an older folder) that Namaa did not fold in. */
+    var sideCopies by mutableStateOf(emptyList<String>())
+        private set
     var rowProblems by mutableStateOf(emptyList<DataProblem>())
         private set
 
@@ -63,9 +66,12 @@ class NamaaStore(book: MoneyBook, private val prefsFile: PrefsFile, val location
         today = book.today()
         blocked = book.unreadableFiles()
         if (blocked.isNotEmpty()) {
-            accounts = emptyList(); txns = emptyList(); budgets = emptyList(); recurring = emptyList(); debts = emptyList(); rowProblems = emptyList()
+            accounts = emptyList(); txns = emptyList(); budgets = emptyList(); recurring = emptyList(); debts = emptyList(); rowProblems = emptyList(); sideCopies = emptyList()
             return
         }
+        // Rows saved in another folder while the shared one was out of reach are folded back in.
+        book.mergeSideCopies()
+        sideCopies = book.unmergedSideCopies()
         // Repeating transactions that came due since the last open are added here, once each.
         book.applyRecurring(today)
         accounts = book.accounts()

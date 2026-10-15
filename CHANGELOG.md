@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- **Nothing vanishes after access returns.** Transactions and accounts added while Namaa was using its private folder (all-files access off) used to be hidden once the shared folder came back. They are now merged in by id, once, without touching or deleting the kept files; anything that cannot be merged is listed on Home.
+
 - **Repeating rules.** Editing the start date of a rule no longer adds a second transaction for a month or week already covered. A rule that starts far in the past asks before adding many transactions at once, and the catch-up now writes each year file once, so it is fast.
 
 - The previous product name is gone from the app, the README and the docs. Data from earlier versions is still found and copied.
