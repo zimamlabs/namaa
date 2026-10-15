@@ -52,6 +52,7 @@ import dev.namaa.core.budgetStatuses
 import dev.namaa.core.debtTotals
 import dev.namaa.core.formatMoney
 import dev.namaa.core.newId
+import dev.namaa.core.dueDates
 import dev.namaa.core.parseMoney
 import dev.namaa.core.withPayment
 import kotlinx.datetime.LocalDate
@@ -185,6 +186,8 @@ private fun BudgetDialog(existing: Budget?, onDismiss: () -> Unit, onDelete: (()
     )
 }
 
+private const val CATCH_UP_CONFIRM_ABOVE = 12
+
 @Composable
 private fun RecurringDialog(existing: Recurring?, store: NamaaStore, today: LocalDate, onDismiss: () -> Unit, onDelete: (() -> Unit)?, onSave: (Recurring) -> Unit) {
     var amount by remember { mutableStateOf(existing?.let { formatMoney(kotlin.math.abs(it.amountMinor)) } ?: "") }
@@ -195,6 +198,14 @@ private fun RecurringDialog(existing: Recurring?, store: NamaaStore, today: Loca
     var frequency by remember { mutableStateOf(existing?.frequency ?: Frequency.Monthly) }
     var start by remember { mutableStateOf(existing?.start ?: today) }
     val minor = parseMoney(amount)?.takeIf { it > 0 }
+    var pending by remember { mutableStateOf<Recurring?>(null) }
+    pending?.let { rule ->
+        AlertDialog(
+            onDismissRequest = { pending = null }, title = { Text(Str.CatchUpTitle.t()) }, text = { Text(Str.CatchUpBody.t(dueDates(rule, today).size)) },
+            confirmButton = { TextButton(onClick = { pending = null; onSave(rule) }) { Text(Str.AddThem.t()) } },
+            dismissButton = { TextButton(onClick = { pending = null }) { Text(Str.Cancel.t()) } },
+        )
+    }
     AlertDialog(
         onDismissRequest = onDismiss, title = { Text(if (existing == null) Str.NewRepeating.t() else Str.EditRepeating.t()) },
         text = {
@@ -210,8 +221,9 @@ private fun RecurringDialog(existing: Recurring?, store: NamaaStore, today: Loca
         },
         confirmButton = {
             TextButton(enabled = minor != null, onClick = {
-                // Changing the start of an existing rule restarts it from the new date; what was already added stays.
-                onSave(Recurring(existing?.id ?: newId(), if (income) minor!! else -minor!!, accountId, category.trim(), note.trim(), frequency, start, existing?.lastGenerated?.takeIf { existing.start == start && existing.frequency == frequency }))
+                // What was already added stays, and the same month or week is never added twice after an edit.
+                val rule = Recurring(existing?.id ?: newId(), if (income) minor!! else -minor!!, accountId, category.trim(), note.trim(), frequency, start, existing?.lastGenerated)
+                if (dueDates(rule, today).size > CATCH_UP_CONFIRM_ABOVE) pending = rule else onSave(rule)
             }) { Text(Str.Save.t()) }
         },
         dismissButton = { Row { onDelete?.let { DeleteButton(Str.DeleteRepeatingDetail.t(), it) }; TextButton(onClick = onDismiss) { Text(Str.Cancel.t()) } } },
