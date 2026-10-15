@@ -133,7 +133,10 @@ fun ReportScreen(store: NamaaStore, padding: PaddingValues) {
                     OutlinedButton(onClick = { saved = store.export(monthFileName(year, month), store.txns.filter { it.date.year == year && it.date.monthNumber == month }) }) { Text(num("${monthName(month)} $year")) }
                     OutlinedButton(onClick = { saved = store.export(yearFileName(year), store.txns.filter { it.date.year == year }) }) { Text(Str.AllOfYear.t(year)) }
                 }
-                saved?.let { Text(Str.SavedTo.raw(it), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+                saved?.let {
+                    Text(Str.SavedTo.raw(it), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    if (store.files != null) OutlinedButton(onClick = { store.saveCopyOf(it) {} }) { Text(Str.SaveCopy.t()) }
+                }
             }
         }
         if (s.byCategory.isEmpty()) item { EmptyHint(Str.NothingSpentTitle.t(), Str.NothingSpentBody.t()) } else item {

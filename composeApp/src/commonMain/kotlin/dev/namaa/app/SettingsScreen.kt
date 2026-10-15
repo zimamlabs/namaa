@@ -73,6 +73,7 @@ fun SettingsScreen(store: NamaaStore, onBack: () -> Unit, onAbout: () -> Unit, o
                     OutlinedButton(onClick = { confirm = old }) { Text(Str.RemoveOldFolder.t()) }
                 }
             }
+            BackupPanel(store)
             Panel {
                 OutlinedButton(onClick = onTour) { Text(Str.ShowTour.t()) }
                 OutlinedButton(onClick = onAbout) { Text(Str.AboutNamaa.t()) }

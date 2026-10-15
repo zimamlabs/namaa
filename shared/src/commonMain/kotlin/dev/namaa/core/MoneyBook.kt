@@ -6,6 +6,7 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.json.Json
+import okio.ByteString.Companion.encodeUtf8
 import okio.FileSystem
 import okio.Path
 
@@ -39,12 +40,19 @@ class MoneyBook(
 
     fun today(): LocalDate = clock.now().toLocalDateTime(zone).date
 
+    /** A sortable time stamp like 20261015-120000, for file names. */
+    fun stamp(): String = clock.now().toLocalDateTime(zone).let { t ->
+        listOf(t.year, t.monthNumber, t.dayOfMonth).joinToString("") { it.toString().padStart(2, '0') } + "-" + listOf(t.hour, t.minute, t.second).joinToString("") { it.toString().padStart(2, '0') }
+    }
+
     private fun read(path: Path): String? = if (fs.exists(path)) fs.read(path) { readUtf8() } else null
 
     // Write to a temp file and move it over, so a crash never leaves a half-written file.
-    private fun write(path: Path, text: String) {
+    private fun write(path: Path, text: String) = write(path, text.encodeUtf8())
+
+    private fun write(path: Path, bytes: okio.ByteString) {
         val tmp = path.parent!! / (path.name + ".tmp")
-        fs.write(tmp) { writeUtf8(text) }
+        fs.write(tmp) { write(bytes) }
         fs.atomicMove(tmp, path)
     }
 
@@ -203,6 +211,59 @@ class MoneyBook(
         if (updated != rules) saveRecurring(updated)
         return fresh.values.sumOf { it.size }
     }
+
+    /** How many things a restore adds (or would add). */
+    data class RestoreReport(val transactions: Int, val accounts: Int, val budgets: Int, val recurring: Int, val debts: Int)
+
+    fun previewRestore(entries: List<Backup.Entry>): RestoreReport = restore(entries, false, "")
+
+    /**
+     * Folds a backup into the current data by id; what is already here wins and nothing is deleted. The whole backup is
+     * parsed first (an unreadable file refuses the restore with nothing changed), then the current data is saved to
+     * `safety-backups/` and checked, then the additions are written.
+     */
+    fun restoreFrom(entries: List<Backup.Entry>, stamp: String): RestoreReport = restore(entries, true, stamp)
+
+    private fun <T> incoming(entries: List<Backup.Entry>, name: String, ser: kotlinx.serialization.KSerializer<T>): List<T> =
+        entries.firstOrNull { it.name == name }?.let { e -> runCatching { json.decodeFromString(ListSerializer(ser), e.bytes.utf8()) }.getOrNull() ?: throw BackupException("$name in the backup cannot be read") }.orEmpty()
+
+    private fun restore(entries: List<Backup.Entry>, apply: Boolean, stamp: String): RestoreReport {
+        if (unreadableFiles().isNotEmpty()) throw BackupException("your current data has a file that cannot be read; fix that first")
+        val accs = incoming(entries, "accounts.json", Account.serializer())
+        val buds = incoming(entries, "budgets.json", Budget.serializer())
+        val recs = incoming(entries, "recurring.json", Recurring.serializer())
+        val debs = incoming(entries, "debts.json", Debt.serializer())
+        val years = entries.filter { it.name.endsWith(".csv") }.associate { e ->
+            val rows = Csv.parse(e.bytes.utf8()).drop(1)
+            val txns = rows.map { r -> runCatching { Txn(r[0], LocalDate.parse(r[1]), r[2].toLong(), r[3], r.getOrElse(4) { "" }, r.getOrElse(5) { "" }, r.getOrElse(6) { "" }) }.getOrNull() ?: throw BackupException("${e.name} in the backup has a row that cannot be read") }
+            e.name.removeSuffix(".csv").toInt() to txns
+        }
+        val curAccs = accounts(); val curBuds = budgets(); val curRecs = recurring(); val curDebs = debts()
+        val newAccs = accs.filter { a -> curAccs.none { it.id == a.id } }
+        fun budKey(b: Budget) = b.category.trim().lowercase() + "|" + b.currency.currencyCode()
+        val newBuds = buds.filter { b -> curBuds.none { budKey(it) == budKey(b) } }.distinctBy { budKey(it) }
+        val newRecs = recs.filter { r -> curRecs.none { it.id == r.id } }
+        val newDebs = debs.filter { d -> curDebs.none { it.id == d.id } }
+        val newTxns = years.mapValues { (y, list) -> val known = transactions(y).map { it.id }.toSet(); list.filter { it.id !in known } }.filterValues { it.isNotEmpty() }
+        val report = RestoreReport(newTxns.values.sumOf { it.size }, newAccs.size, newBuds.size, newRecs.size, newDebs.size)
+        if (!apply) return report
+
+        if (dataFilesExist()) {
+            val safety = Backup.create(fs, root, stamp)
+            val path = root / "safety-backups" / "Namaa-before-restore-$stamp.namaa-backup"
+            fs.createDirectories(path.parent!!)
+            write(path, safety)
+            if (fs.read(path) { readByteString() } != safety) throw BackupException("could not save the safety backup, nothing was changed")
+        }
+        if (newAccs.isNotEmpty()) saveAccounts(curAccs + newAccs)
+        if (newBuds.isNotEmpty()) saveBudgets(curBuds + newBuds)
+        if (newRecs.isNotEmpty()) saveRecurring(curRecs + newRecs)
+        if (newDebs.isNotEmpty()) saveDebts(curDebs + newDebs)
+        newTxns.forEach { (y, list) -> writeYear(y, transactions(y) + list) }
+        return report
+    }
+
+    private fun dataFilesExist() = fs.listOrNull(root).orEmpty().any { Backup.isDataFile(it.name) }
 
     data class MergeReport(val mergedTransactions: Int, val mergedAccounts: Int)
 

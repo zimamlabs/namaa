@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- **Back up and restore.** Settings can back up everything (accounts, transactions, budgets, repeating rules, debts) into one file you save anywhere through the system screen, no permission needed. The backup is read back and checked. Restore shows what it will add, saves your current data first in `safety-backups/`, adds only what is missing by id and never deletes or replaces. Exports can be saved to another place too.
+- Android system backup is switched off, so financial files are never uploaded to a Google account behind your back; the in-app backup is the way.
+
 - **Different currencies are never added together.** Home shows a balance per currency; the month figures, charts and Report show one currency at a time (chips to switch); each budget counts only its own currency; debts are totalled per currency. A transfer between accounts of different currencies is refused with a message. Existing files read unchanged.
 
 - **Nothing vanishes after access returns.** Transactions and accounts added while Namaa was using its private folder (all-files access off) used to be hidden once the shared folder came back. They are now merged in by id, once, without touching or deleting the kept files; anything that cannot be merged is listed on Home.

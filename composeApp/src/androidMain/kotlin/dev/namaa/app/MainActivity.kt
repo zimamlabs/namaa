@@ -9,6 +9,7 @@ import android.provider.Settings
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import dev.namaa.core.DataLocation
 import dev.namaa.core.LegacyNames
 import dev.namaa.core.MoneyBook
@@ -18,6 +19,22 @@ import okio.Path.Companion.toOkioPath
 
 class MainActivity : ComponentActivity() {
     private lateinit var store: NamaaStore
+    private var pendingSave: Pair<ByteArray, (Boolean) -> Unit>? = null
+    private var pendingPick: ((ByteArray?) -> Unit)? = null
+    private val saveLauncher = registerForActivityResult(ActivityResultContracts.CreateDocument("application/octet-stream")) { uri ->
+        val (bytes, done) = pendingSave ?: return@registerForActivityResult
+        pendingSave = null
+        done(uri != null && runCatching { contentResolver.openOutputStream(uri)?.use { it.write(bytes) } != null }.getOrDefault(false))
+    }
+    private val pickLauncher = registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        val done = pendingPick ?: return@registerForActivityResult
+        pendingPick = null
+        done(uri?.let { runCatching { contentResolver.openInputStream(it)?.use { s -> s.readBytes() } }.getOrNull() })
+    }
+    private val files = object : FileActions {
+        override fun saveAs(suggestedName: String, bytes: ByteArray, onDone: (Boolean) -> Unit) { pendingSave = bytes to onDone; saveLauncher.launch(suggestedName) }
+        override fun pick(onPicked: (ByteArray?) -> Unit) { pendingPick = onPicked; pickLauncher.launch(arrayOf("*/*")) }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
@@ -35,7 +52,7 @@ class MainActivity : ComponentActivity() {
             val intent = Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION, Uri.parse("package:$packageName"))
             runCatching { startActivity(intent) }.onFailure { startActivity(Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION)) }
         }) else null
-        store = NamaaStore(MoneyBook(FileSystem.SYSTEM, location.root), PrefsFile(FileSystem.SYSTEM, filesDir.resolve("prefs.json").toOkioPath()), location, ask)
+        store = NamaaStore(MoneyBook(FileSystem.SYSTEM, location.root), PrefsFile(FileSystem.SYSTEM, filesDir.resolve("prefs.json").toOkioPath()), location, ask, files)
         setContent { NamaaApp(store) }
     }
 
