@@ -69,7 +69,7 @@ class PlanTest {
         val path = b.export(monthFileName(2026, 10), b.allTransactions())
         assertEquals("/z/exports/Namaa-2026-10.csv".toPath(), path)
         val rows = Csv.parse(b.fs.read(path) { readUtf8() })
-        assertEquals(listOf("date", "account", "category", "amount", "note", "transfer"), rows[0]); assertEquals(listOf("2026-10-02", "Cash", "Food", "-12.50", "lunch, with \"friends\"", ""), rows[1])
+        assertEquals(listOf("date", "account", "category", "amount", "currency", "note", "transfer"), rows[0]); assertEquals(listOf("2026-10-02", "Cash", "Food", "-12.50", "USD", "lunch, with \"friends\"", ""), rows[1])
         assertEquals("Namaa-2026.csv", yearFileName(2026))
     }
 

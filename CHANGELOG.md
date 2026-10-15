@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- **Safer CSV exports.** Text that a spreadsheet would run as a formula (starting with = + - or @) is exported as plain text, and there is a new currency column. Your own year files are not changed.
+
 - **Transfers stay balanced.** Saving a transfer writes both legs in one write. Tapping a transfer opens a transfer editor that changes both legs together (a single leg can no longer be edited alone).
 - **Every delete asks first**, and says what is lost: the matching transfer leg, a debt's payments, a rule's kept transactions.
 
