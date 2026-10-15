@@ -19,14 +19,17 @@ Namaa (نماء, growth) keeps your accounts and your income and spending in a f
 
 ## Features
 
-- **Home**: this month's balance, income, spent and left in one card; a donut chart of where the money went; income against spending for the last six months; a card for each account; recent transactions; quick actions to add an expense, an income or a transfer.
-- **Accounts** with their balances. A plain Cash account is there from the first launch; add more or rename them (accounts cannot be deleted yet).
-- **Transfers** between your own accounts: two legs that always sum to zero and never count as income or spending.
-- **Transactions**, newest first: amount, income or spending, account, category (chips or your own words), note and a date picked from a calendar. Tap one to edit or delete it.
-- **Report**: any month, with totals and spending by category.
-- **Plan**: budgets per category with progress bars and a warning at 80% and when you go over; repeating transactions (weekly, monthly); and who owes whom, with partial payments.
-- **Search and export**: filter transactions by text, category, account and dates; export a month or a year to CSV in the `exports` folder.
-- **A first-run tour** (reopen it from Settings) and a one-time *What's new* after each update.
+- **Home**: this month's balance, income, spent and left; a balance per currency (different currencies are never added together); a donut chart of where the money went; income against spending for the last six months; a card for each account; recent transactions; quick actions to add an expense, an income or a transfer.
+- **Side menu and swipe**: swipe between Home, Money, Accounts, Plan and Report (mirrored in Arabic) or open the menu for the sections, Search, Quick add, Settings, What's new, the tour and About.
+- **Accounts** with their balances. A plain Cash account is there from the first launch; add more, rename or archive them (archived accounts keep their history and their place in the totals).
+- **Transfers** between your own accounts in the same currency: two legs written and edited together, never counted as income or spending.
+- **Transactions**, newest first: amount, income or spending, account, category (chips or your own words), note and a date picked from a calendar. Long-press a row for Edit, Duplicate, Split and Delete (which asks first).
+- **Report**: any month, with totals and spending by category, per currency.
+- **Plan**: budgets per category with progress bars and a warning at 80% and when you go over; repeating transactions (weekly, monthly); and who owes whom, with partial payments. Long-press for the menu on each.
+- **Search, sort and export**: filter transactions by text, category, account and dates, sort by date or size, export a month or a year to CSV (spreadsheet formulas are neutralised, with a currency column).
+- **Back up and restore** the whole data folder to one checked file with the system save screen; a restore only adds what is missing and keeps a safety copy first.
+- **Settings** as a list of sections: Appearance (mode, six colour themes, four text sizes, spacing, reduce animations), Sections and layout, Language, Currency and categories, Data and storage, Privacy and security (optional app lock), About.
+- **A first-run tour** (reopen it from the menu) and a one-time *What's new* after each update.
 - **Plain files** in one **Zimam folder**: `accounts.json`, one `<year>.csv` per year (amounts in minor units, cents), `budgets.json`, `recurring.json`, `debts.json`, and `exports/` for CSV exports. Open them in any editor or spreadsheet. If a file ever cannot be read, Namaa keeps a `.corrupt-<time>` copy and never overwrites it.
 
 ## Languages
@@ -83,7 +86,7 @@ You need JDK 17 or newer and, for Android, the Android SDK (platform 36).
 
 ```
 ./gradlew :shared:desktopTest            # the money tests
-./gradlew :composeApp:desktopTest        # the screen-module tests
+./gradlew :composeApp:desktopTest        # the screen tests (shell, swipe, menus, themes), rendered offscreen
 ./gradlew :composeApp:run                # run the desktop build for development (data in ~/Zimam/Namaa)
 ./gradlew :composeApp:assembleDebug      # Android debug APKs
 ```
@@ -92,7 +95,7 @@ You need JDK 17 or newer and, for Android, the Android SDK (platform 36).
 
 ## Roadmap
 
-Savings goals, charts by category over time, import from a bank CSV, and a Linux edition once the phone app is stable.
+Next, in this order: home-screen widgets (this month's balance and budget bar, quick add an expense, debts), import from a bank CSV with a preview and duplicate detection (design in `docs/design`), savings goals, a currency picker with per-currency decimals, and receipts or notes on transactions. A Linux edition comes after the phone app is stable.
 
 ## Licence
 

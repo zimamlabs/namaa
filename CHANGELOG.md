@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.7.0
 
 - **Arabic amounts read correctly.** In Arabic, amounts get a real minus sign and are isolated so the sign cannot detach from its digits, and Arabic-Indic digits use the Arabic decimal mark. Donut percentages always add up to 100. The charts have text descriptions for screen readers. Marked unreviewed by a native reader.
 - **Sort** the Money list by newest, oldest, largest or smallest.
