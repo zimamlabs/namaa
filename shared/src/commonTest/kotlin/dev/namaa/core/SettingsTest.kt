@@ -57,6 +57,19 @@ class SettingsTest {
         assertEquals(listOf("home", "money"), Sections.visible(emptyList(), setOf("accounts", "plan", "report", "home")))
     }
 
+    @Test fun homeShowsAtMostFourCardsInTheUsersOrder() {
+        assertEquals(listOf("budgets", "spending", "recent", "accounts"), HomeCards.visible(emptyList(), HomeCards.defaultHidden))
+        assertEquals(listOf("recent", "trend", "budgets", "spending"), HomeCards.visible(listOf("recent", "trend"), emptySet()))
+        assertEquals(listOf("budgets", "accounts"), HomeCards.visible(emptyList(), setOf("spending", "recent", "trend")))
+        assertEquals(emptyList(), HomeCards.visible(emptyList(), HomeCards.all.toSet()))
+    }
+
+    @Test fun homeCardSettingsRoundTripAndAreNormalized() {
+        val r = repo(); r.update { it.copy(homeCardOrder = listOf("accounts", "zzz", "accounts"), hiddenHomeCards = setOf("recent", "nope")) }
+        assertEquals(listOf("accounts"), repo().current.homeCardOrder); assertEquals(setOf("recent"), repo().current.hiddenHomeCards)
+        assertEquals(HomeCards.defaultHidden, Settings().hiddenHomeCards)
+    }
+
     @Test fun startSectionMustBeVisible() {
         val s = Settings(startSection = "plan", hiddenSections = setOf("plan")).normalized()
         assertEquals("home", s.startSection)

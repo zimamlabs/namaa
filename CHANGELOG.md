@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- **A minimal Home.** One hero (the month's balance per currency, a thin budget bar, income, spent and left) and the three quick actions, then at most four single-purpose cards that each open their section: Budgets, Where the money went, Recent and Accounts (Last six months is available too). Choose, reorder and hide the cards in Settings, Sections and layout. A fresh install gets a designed empty state with one button. The long What's new card moved to the menu.
+
 ## 0.7.0
 
 - **Arabic amounts read correctly.** In Arabic, amounts get a real minus sign and are isolated so the sign cannot detach from its digits, and Arabic-Indic digits use the Arabic decimal mark. Donut percentages always add up to 100. The charts have text descriptions for screen readers. Marked unreviewed by a native reader.

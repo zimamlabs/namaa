@@ -12,6 +12,17 @@ object Palettes {
     val ids = listOf(DEFAULT, "ocean", "forest", "violet", "rose", "graphite")
 }
 
+/** The cards under the hero on Home. Home stays minimal: at most [MAX] show, in the user's order. */
+object HomeCards {
+    const val MAX = 4
+    val all = listOf("budgets", "spending", "recent", "accounts", "trend")
+    val defaultHidden = setOf("trend")
+
+    /** The cards to show: the user's [order] first (unknown names dropped), then any missing ones, minus [hidden], at most [MAX]. */
+    fun visible(order: List<String>, hidden: Set<String>): List<String> =
+        (order.filter { it in all }.distinct().let { it + (all - it.toSet()) }).filter { it !in hidden }.take(MAX)
+}
+
 /** The main sections of the app, in their default order. */
 object Sections {
     const val HOME = "home"
@@ -46,6 +57,8 @@ data class Settings(
     val sectionOrder: List<String> = emptyList(),
     val hiddenSections: Set<String> = emptySet(),
     val appLock: Boolean = false,
+    val homeCardOrder: List<String> = emptyList(),
+    val hiddenHomeCards: Set<String> = HomeCards.defaultHidden,
 )
 
 /** The values a settings file is allowed to hold; anything else (a hand edit, an older or newer version) is brought back into range. */
@@ -58,6 +71,8 @@ fun Settings.normalized(): Settings = copy(
     density = density.takeIf { it in setOf("comfortable", "compact") } ?: "comfortable",
     sectionOrder = sectionOrder.filter { it in Sections.all }.distinct(),
     hiddenSections = hiddenSections.filter { it in Sections.all && it != Sections.HOME }.toSet(),
+    homeCardOrder = homeCardOrder.filter { it in HomeCards.all }.distinct(),
+    hiddenHomeCards = hiddenHomeCards.filter { it in HomeCards.all }.toSet(),
     startSection = startSection.takeIf { it in Sections.all && (it == Sections.HOME || it !in hiddenSections) } ?: Sections.HOME,
 )
 
