@@ -46,6 +46,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import dev.namaa.core.FolderNote
+import dev.namaa.core.HomeCards
 import dev.namaa.core.Palettes
 import dev.namaa.core.Sections
 import dev.namaa.core.Settings
@@ -119,11 +120,28 @@ internal fun SectionsPage(store: NamaaStore) {
             Switch(id == Sections.HOME || id !in st.hiddenSections, { on -> store.updateSettings { s -> s.copy(hiddenSections = if (on) s.hiddenSections - id else s.hiddenSections + id) } }, enabled = id != Sections.HOME)
         }
     }
+    Label(Str.HomeCardsTitle.t())
+    Text(Str.HomeCardsHint.t(), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    val cardOrder = st.homeCardOrder.filter { it in HomeCards.all }.let { it + (HomeCards.all - it.toSet()) }
+    val shownNow = HomeCards.visible(st.homeCardOrder, st.hiddenHomeCards)
+    cardOrder.forEachIndexed { i, id ->
+        Row(Modifier.fillMaxWidth().heightIn(min = 56.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+            Text(homeCardName(id), Modifier.weight(1f), style = MaterialTheme.typography.bodyLarge)
+            IconButton(enabled = i > 0, onClick = { store.updateSettings { s -> s.copy(homeCardOrder = cardOrder.toMutableList().also { it.add(i - 1, it.removeAt(i)) }) } }) { Icon(Icons.Rounded.ArrowUpward, Str.MoveUp.t()) }
+            IconButton(enabled = i < cardOrder.lastIndex, onClick = { store.updateSettings { s -> s.copy(homeCardOrder = cardOrder.toMutableList().also { it.add(i + 1, it.removeAt(i)) }) } }) { Icon(Icons.Rounded.ArrowDownward, Str.MoveDown.t()) }
+            Switch(id in shownNow, { on -> store.updateSettings { s -> s.copy(hiddenHomeCards = if (on) s.hiddenHomeCards - id else s.hiddenHomeCards + id) } }, enabled = id in shownNow || shownNow.size < HomeCards.MAX)
+        }
+    }
     Label(Str.StartOn.t())
     Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
         visibleTabs(st).forEach { t -> FilterChip(st.startSection == t.id, { store.updateSettings { it.copy(startSection = t.id) } }, { Text(t.label.t()) }) }
     }
 }
+
+@Composable
+internal fun homeCardName(id: String): String = when (id) {
+    "budgets" -> Str.CardBudgets; "spending" -> Str.CardSpending; "recent" -> Str.CardRecent; "accounts" -> Str.CardAccounts; else -> Str.CardTrend
+}.t()
 
 @Composable
 internal fun LanguagePage(store: NamaaStore) {
